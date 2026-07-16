@@ -1,0 +1,6 @@
+# Overrides locaux par poste (secrets, chemins, clés API) — jamais versionnés
+settings.local.json
+
+# Bruit OS/éditeur
+.DS_Store
+*.swp
