@@ -65,7 +65,11 @@ conteneur**, jamais ton poste. Depuis le MCP :
 
 - port publié sur l'hôte → `http://host.docker.internal:<port>` ;
 - app dans Docker sans port publié → relance le MCP avec `--network <réseau du projet>`
-  et vise le **nom de service** (`http://app:3000`) ;
+  et vise le **nom de conteneur**, pas le nom de service. Un service nommé `app`,
+  `dev`, `page`, `new`, `zip` ou `mov` porte le nom d'un **TLD préchargé HSTS** :
+  Chromium force le HTTPS avant de résoudre le nom et échoue en
+  `ERR_SSL_PROTOCOL_ERROR`, alors que `curl` et `fetch` passent très bien.
+  Vérifier un nom : `curl -s "https://hstspreload.org/api/v2/status?domain=<nom>"` ;
 - rien ne répond → vérifie que le serveur tourne **avant** d'incriminer le réseau.
   L'image ne contient ni `curl` ni `wget` : teste avec `node -e "fetch(...)"`.
 
