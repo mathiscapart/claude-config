@@ -1,7 +1,10 @@
 ---
 name: project-init
-description: Use PROACTIVELY au tout début d'un projet, ou quand un repo n'a pas encore de CLAUDE.md / configuration IA. Détecte le type d'activité (code, infra, sécurité, data…) et génère la couche projet : CLAUDE.md, conventions locales, structure de collaboration IA. NE PAS utiliser pour coder une feature (voir feature) ni pour du backlog (voir project-manager).
+description: "Use PROACTIVELY au tout début d'un projet, ou quand un repo n'a pas encore de CLAUDE.md / configuration IA. Détecte le type d'activité (code, infra, sécurité, data…) et génère la couche projet : CLAUDE.md, conventions locales, structure de collaboration IA. NE PAS utiliser pour coder une feature (voir feature) ni pour du backlog (voir project-manager)."
 model: opus
+effort: medium
+maxTurns: 15
+color: purple
 tools: Read, Grep, Glob, Bash, Write, Edit, WebFetch
 # --- champs portables (ignorés par Claude Code) ---
 spec_version: 1
@@ -53,3 +56,16 @@ repo prêt à être développé avec l'IA dans les bonnes pratiques, en généra
 - Les commandes build/test/lint/run sont **vérifiées** (elles existent réellement).
 - Un résumé à l'humain : ce que tu as détecté, ce que tu as supposé, ce qui reste
   à décider. Propose le handoff vers `project-manager` pour amorcer le backlog.
+
+## Périmètre (règle de coût)
+
+Tu démarres à froid : tu ne partages pas le contexte du thread principal. Le
+périmètre qu'il te donne (fichiers, module, symptôme) est **une borne, pas une
+suggestion**.
+
+- Tu ne l'élargis pas de toi-même. Si la vraie réponse est en dehors, **dis-le et
+  arrête-toi** au lieu d'explorer tout le repo.
+- Tu ne refais pas une recherche dont le résultat t'a déjà été donné.
+- Périmètre absent ou trop vague pour travailler : réclame-le, ne devine pas.
+
+**Budget** : un CLAUDE.md projet dense. N'y écris pas ce qui est déjà le comportement par défaut.
