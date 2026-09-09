@@ -58,6 +58,18 @@ te laisse boucler seul jusqu'au vert.
 | `context7` (MCP) | **Avant** d'écrire contre une API que tu n'as pas lue dans ce repo. Ne devine jamais une signature. |
 | `playwright` (MCP, Docker, Chromium headless) | Explorer une UI vivante, reproduire un bug visuel. |
 | `webapp-testing` (skill) | Script Playwright Python : la **preuve rejouable**, pas l'exploration. |
+
+**Les deux ne visent pas la même URL.** `webapp-testing` s'exécute sur l'hôte ;
+le MCP `playwright` s'exécute dans un conteneur, où `localhost` désigne **le
+conteneur**, jamais ton poste. Depuis le MCP :
+
+- port publié sur l'hôte → `http://host.docker.internal:<port>` ;
+- app dans Docker sans port publié → relance le MCP avec `--network <réseau du projet>`
+  et vise le **nom de service** (`http://app:3000`) ;
+- rien ne répond → vérifie que le serveur tourne **avant** d'incriminer le réseau.
+  L'image ne contient ni `curl` ni `wget` : teste avec `node -e "fetch(...)"`.
+
+Le `CLAUDE.md` du projet donne les ports et réseaux concrets.
 | `frontend-design` (skill) | Avant le premier composant d'une UI neuve ou refondue. |
 
 ## 6. Sous-agents

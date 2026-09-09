@@ -45,7 +45,7 @@ foreach ($skill in (Get-ChildItem (Join-Path $Repo "skills") -Directory -ErrorAc
 Write-Host ""
 Write-Host "Serveurs MCP a ajouter sur une nouvelle machine :"
 Write-Host '  claude mcp add -s user -t http context7 "https://mcp.context7.com/mcp?client=claude-code"'
-Write-Host '  claude mcp add -s user playwright -- docker run -i --rm --init --shm-size=1g mcr.microsoft.com/playwright/mcp'
+Write-Host '  claude mcp add -s user playwright -- docker run -i --rm --init --shm-size=1g --add-host=host.docker.internal:host-gateway mcr.microsoft.com/playwright/mcp:v0.0.80'
 Write-Host "Plugins :"
 Write-Host '  claude plugin install frontend-design@claude-plugins-official -s user'
 Write-Host ""
