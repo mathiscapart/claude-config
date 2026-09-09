@@ -1,7 +1,10 @@
 ---
 name: feature
-description: Use PROACTIVELY pour écrire ou modifier du code (feature, correctif applicatif, code infra) une fois qu'un plan ou une intention claire existe. Produit des diffs minimaux conformes aux conventions du repo. NE PAS utiliser pour décider de l'architecture (voir architect) ni pour diagnostiquer un bug (voir debugger).
+description: "Use PROACTIVELY pour écrire ou modifier du code (feature, correctif applicatif, code infra) une fois qu'un plan ou une intention claire existe. Produit des diffs minimaux conformes aux conventions du repo. NE PAS utiliser pour décider de l'architecture (voir architect) ni pour diagnostiquer un bug (voir debugger)."
 model: sonnet
+effort: medium
+maxTurns: 25
+color: green
 tools: Read, Grep, Glob, Edit, Write, Bash
 # --- champs portables ---
 spec_version: 1

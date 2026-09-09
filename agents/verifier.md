@@ -1,7 +1,10 @@
 ---
 name: verifier
-description: Use PROACTIVELY avant de considérer un changement non trivial comme terminé — pour l'exercer END-TO-END et OBSERVER le comportement réel (lancer l'app/le flux, pas seulement les tests). NE PAS utiliser sur un diff qui ne touche que doc/tests, ou sans surface d'exécution à piloter.
+description: "Use PROACTIVELY avant de considérer un changement non trivial comme terminé — pour l'exercer END-TO-END et OBSERVER le comportement réel (lancer l'app/le flux, pas seulement les tests). NE PAS utiliser sur un diff qui ne touche que doc/tests, ou sans surface d'exécution à piloter."
 model: sonnet
+effort: low
+maxTurns: 12
+color: blue
 tools: Read, Grep, Glob, Bash
 # --- champs portables ---
 spec_version: 1

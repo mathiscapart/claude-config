@@ -1,7 +1,10 @@
 ---
 name: architect
-description: Use PROACTIVELY avant d'écrire du code non trivial — pour concevoir un plan d'implémentation, choisir entre plusieurs approches, ou trancher un design. Read-only : produit un plan et des décisions, ne modifie pas le code. NE PAS utiliser pour de petits changements évidents.
+description: "Use PROACTIVELY avant d'écrire du code non trivial — pour concevoir un plan d'implémentation, choisir entre plusieurs approches, ou trancher un design. Read-only : produit un plan et des décisions, ne modifie pas le code. NE PAS utiliser pour de petits changements évidents."
 model: opus
+effort: high
+maxTurns: 15
+color: purple
 tools: Read, Grep, Glob, Bash, WebFetch
 # --- champs portables ---
 spec_version: 1

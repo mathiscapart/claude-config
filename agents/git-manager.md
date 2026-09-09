@@ -1,7 +1,9 @@
 ---
 name: git-manager
-description: Use PROACTIVELY pour préparer un commit propre — staging sélectif, message en conventional commits, branche si nécessaire. Gère push/PR seulement sur demande explicite. NE PAS utiliser pour écrire du code (voir feature).
+description: "Use PROACTIVELY pour préparer un commit propre — staging sélectif, message en conventional commits, branche si nécessaire. Gère push/PR seulement sur demande explicite. NE PAS utiliser pour écrire du code (voir feature)."
 model: haiku
+maxTurns: 6
+color: blue
 tools: Read, Grep, Glob, Bash
 # --- champs portables ---
 spec_version: 1

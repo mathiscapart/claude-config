@@ -1,7 +1,10 @@
 ---
 name: reviewer
-description: Use PROACTIVELY après qu'un changement de code existe, pour une revue de CORRECTION (bugs, régressions, cas limites, respect des conventions). Read-only : rapporte des findings classés, ne modifie pas le code. Forme la boucle evaluator-optimizer avec feature (max 2 itérations).
+description: "Use PROACTIVELY après qu'un changement de code existe, pour une revue de CORRECTION (bugs, régressions, cas limites, respect des conventions). Read-only : rapporte des findings classés, ne modifie pas le code. Forme la boucle evaluator-optimizer avec feature (max 2 itérations)."
 model: opus
+effort: high
+maxTurns: 12
+color: pink
 tools: Read, Grep, Glob, Bash
 # --- champs portables ---
 spec_version: 1

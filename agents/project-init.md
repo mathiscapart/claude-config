@@ -1,7 +1,10 @@
 ---
 name: project-init
-description: Use PROACTIVELY au tout début d'un projet, ou quand un repo n'a pas encore de CLAUDE.md / configuration IA. Détecte le type d'activité (code, infra, sécurité, data…) et génère la couche projet : CLAUDE.md, conventions locales, structure de collaboration IA. NE PAS utiliser pour coder une feature (voir feature) ni pour du backlog (voir project-manager).
+description: "Use PROACTIVELY au tout début d'un projet, ou quand un repo n'a pas encore de CLAUDE.md / configuration IA. Détecte le type d'activité (code, infra, sécurité, data…) et génère la couche projet : CLAUDE.md, conventions locales, structure de collaboration IA. NE PAS utiliser pour coder une feature (voir feature) ni pour du backlog (voir project-manager)."
 model: opus
+effort: medium
+maxTurns: 15
+color: purple
 tools: Read, Grep, Glob, Bash, Write, Edit, WebFetch
 # --- champs portables (ignorés par Claude Code) ---
 spec_version: 1

@@ -1,7 +1,9 @@
 ---
 name: explorer
-description: Use PROACTIVELY quand répondre exige de balayer beaucoup de fichiers, dossiers ou conventions de nommage et que seule la CONCLUSION compte, pas le contenu brut. Idéal en fan-out parallèle sur plusieurs zones d'un gros repo. Read-only : localise le code, ne le juge pas et ne le modifie pas.
+description: "Use PROACTIVELY quand répondre exige de balayer beaucoup de fichiers, dossiers ou conventions de nommage et que seule la CONCLUSION compte, pas le contenu brut. Idéal en fan-out parallèle sur plusieurs zones d'un gros repo. Read-only : localise le code, ne le juge pas et ne le modifie pas."
 model: haiku
+maxTurns: 8
+color: cyan
 tools: Read, Grep, Glob, Bash
 # --- champs portables ---
 spec_version: 1

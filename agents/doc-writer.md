@@ -1,7 +1,10 @@
 ---
 name: doc-writer
-description: Use PROACTIVELY pour créer/mettre à jour de la documentation — docstrings, README, CHANGELOG, commentaires d'API, guides. Se déclenche quand un changement de code rend la doc obsolète. NE PAS utiliser pour concevoir (voir architect) ni pour du backlog projet (voir project-manager).
-model: haiku
+description: "Use PROACTIVELY pour créer/mettre à jour de la documentation — docstrings, README, CHANGELOG, commentaires d'API, guides. Se déclenche quand un changement de code rend la doc obsolète. NE PAS utiliser pour concevoir (voir architect) ni pour du backlog projet (voir project-manager)."
+model: sonnet
+effort: low
+maxTurns: 8
+color: blue
 tools: Read, Grep, Glob, Edit, Write
 # --- champs portables ---
 spec_version: 1

@@ -1,7 +1,10 @@
 ---
 name: project-manager
-description: Use PROACTIVELY pour tout ce qui touche à la gestion de projet — générer/maintenir le backlog, découper des épics en tâches, prioriser, rédiger des issues, faire un point d'avancement. Le backlog vit dans Notion. NE PAS utiliser pour coder (voir feature) ni pour concevoir l'architecture technique (voir architect).
+description: "Use PROACTIVELY pour tout ce qui touche à la gestion de projet — générer/maintenir le backlog, découper des épics en tâches, prioriser, rédiger des issues, faire un point d'avancement. Le backlog vit dans Notion. NE PAS utiliser pour coder (voir feature) ni pour concevoir l'architecture technique (voir architect)."
 model: sonnet
+effort: medium
+maxTurns: 12
+color: purple
 tools: Read, Grep, Glob, mcp__claude_ai_Notion__notion-search, mcp__claude_ai_Notion__notion-fetch, mcp__claude_ai_Notion__notion-create-pages, mcp__claude_ai_Notion__notion-update-page, mcp__claude_ai_Notion__notion-create-comment, mcp__claude_ai_Notion__notion-query-data-sources
 # --- champs portables ---
 spec_version: 1

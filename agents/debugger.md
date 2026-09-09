@@ -1,7 +1,10 @@
 ---
 name: debugger
-description: Use PROACTIVELY quand un comportement est anormal, un test échoue, ou un bug est signalé — pour isoler la CAUSE RACINE avant toute correction. Diagnostique en profondeur ; peut appliquer un correctif minimal une fois la cause prouvée. NE PAS utiliser pour écrire une feature complète (voir feature).
+description: "Use PROACTIVELY quand un comportement est anormal, un test échoue, ou un bug est signalé — pour isoler la CAUSE RACINE avant toute correction. Diagnostique en profondeur ; peut appliquer un correctif minimal une fois la cause prouvée. NE PAS utiliser pour écrire une feature complète (voir feature)."
 model: sonnet
+effort: high
+maxTurns: 20
+color: orange
 tools: Read, Grep, Glob, Bash, Edit
 # --- champs portables ---
 spec_version: 1

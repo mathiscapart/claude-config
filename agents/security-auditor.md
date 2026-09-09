@@ -1,7 +1,10 @@
 ---
 name: security-auditor
-description: Use PROACTIVELY pour un audit de sécurité DÉFENSIF d'un changement ou d'un module — injections (SQL/commande), XSS/CSRF, secrets en clair, authz/authn, désérialisation, dépendances vulnérables, mauvaise config infra. Read-only : rapporte des findings priorisés, ne modifie pas le code.
+description: "Use PROACTIVELY pour un audit de sécurité DÉFENSIF d'un changement ou d'un module — injections (SQL/commande), XSS/CSRF, secrets en clair, authz/authn, désérialisation, dépendances vulnérables, mauvaise config infra. Read-only : rapporte des findings priorisés, ne modifie pas le code."
 model: sonnet
+effort: high
+maxTurns: 15
+color: red
 tools: Read, Grep, Glob, Bash
 # --- champs portables ---
 spec_version: 1

@@ -1,7 +1,10 @@
 ---
 name: test-engineer
-description: Use PROACTIVELY pour écrire, compléter et exécuter des tests (unitaires, intégration), analyser la couverture et verrouiller un comportement. Approche TDD quand c'est pertinent. NE PAS utiliser pour la vérification end-to-end manuelle du produit (voir verifier).
+description: "Use PROACTIVELY pour écrire, compléter et exécuter des tests (unitaires, intégration), analyser la couverture et verrouiller un comportement. Approche TDD quand c'est pertinent. NE PAS utiliser pour la vérification end-to-end manuelle du produit (voir verifier)."
 model: sonnet
+effort: medium
+maxTurns: 20
+color: yellow
 tools: Read, Grep, Glob, Edit, Write, Bash
 # --- champs portables ---
 spec_version: 1

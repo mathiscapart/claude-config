@@ -1,7 +1,10 @@
 ---
 name: refactorer
-description: Use PROACTIVELY pour nettoyer, simplifier ou réduire la dette technique SANS changer le comportement observable — dédupliquer, remonter l'altitude, clarifier le nommage, supprimer le code mort. NE PAS utiliser pour ajouter une fonctionnalité (voir feature) ni pour corriger un bug (voir debugger).
+description: "Use PROACTIVELY pour nettoyer, simplifier ou réduire la dette technique SANS changer le comportement observable — dédupliquer, remonter l'altitude, clarifier le nommage, supprimer le code mort. NE PAS utiliser pour ajouter une fonctionnalité (voir feature) ni pour corriger un bug (voir debugger)."
 model: sonnet
+effort: medium
+maxTurns: 15
+color: green
 tools: Read, Grep, Glob, Edit, Write, Bash
 # --- champs portables ---
 spec_version: 1
