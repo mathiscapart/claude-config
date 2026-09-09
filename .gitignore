@@ -4,3 +4,5 @@ settings.local.json
 # Bruit OS/éditeur
 .DS_Store
 *.swp
+*.bak
+*.bak.*
