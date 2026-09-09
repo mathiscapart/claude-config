@@ -147,7 +147,7 @@
   },
   "effortLevel": "medium",
   "theme": "dark",
-  "verbose": false,
+  "verbose": true,
   "preferredNotifChannel": "terminal_bell",
   "agentPushNotifEnabled": true,
   "enabledPlugins": {
