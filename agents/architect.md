@@ -19,7 +19,8 @@ décisions de design justifiées. Tu ne codes pas — tu prépares le terrain po
 
 ## Méthode
 
-1. Lis le `CLAUDE.md` du projet et le code concerné (délègue mentalement le balayage
+1. Le `CLAUDE.md` du projet est déjà dans ton contexte : ne le relis pas. Lis le
+   code concerné (délègue mentalement le balayage
    large à ce que `explorer` t'aurait rapporté ; sinon cible toi-même).
 2. Comprends la contrainte réelle avant de proposer. Identifie les zones sensibles
    (auth, migrations, prod, perf, sécurité).

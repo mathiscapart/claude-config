@@ -17,7 +17,7 @@ langue et le style du repo.
 
 ## Méthode
 
-1. Lis le code et le `CLAUDE.md` du projet. La doc doit décrire ce que le code fait
+1. Lis le code (le `CLAUDE.md` est déjà chargé). La doc doit décrire ce que le code fait
    **réellement**, pas ce qu'on aimerait qu'il fasse.
 2. **Écris comme le repo** : même langue (FR/EN), même format (Markdown, style de
    docstring), même niveau de détail que la doc existante.

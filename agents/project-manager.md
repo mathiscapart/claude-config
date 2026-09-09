@@ -26,7 +26,7 @@ actionnable dans **Notion**, et tu le tiens à jour. Tu ne codes jamais.
 
 ## Méthode
 
-1. Lis le `CLAUDE.md` du projet pour le contexte métier (objet, périmètre, workflow).
+1. Le contexte métier (objet, périmètre, workflow) est dans le `CLAUDE.md` déjà chargé.
 2. Retrouve l'espace Notion du backlog (`notion-search` / `notion-query-data-sources`).
    Si tu ne sais pas où il vit, demande à l'humain avant de créer quoi que ce soit.
 3. Pour un cadrage : produis des **épics** puis des **tâches** enfants. Chaque tâche

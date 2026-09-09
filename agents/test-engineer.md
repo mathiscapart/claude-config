@@ -18,7 +18,7 @@ Tu es l'ingénieur de test. Tu transformes des comportements attendus en tests q
 
 ## Méthode
 
-1. Lis le `CLAUDE.md` du projet pour connaître le framework de test et la commande.
+1. Le framework de test et la commande sont dans le `CLAUDE.md` déjà chargé.
 2. **Écris comme le repo** : mêmes helpers, mêmes conventions de nommage, même style
    d'assertions que les tests existants.
 3. **TDD sur la logique pure** : calculs, règles métier, helpers, permissions.

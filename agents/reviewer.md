@@ -22,7 +22,16 @@ stylistiquement différent de tes goûts.
    nécessaire pour juger, pas tout le repo.
 2. Cherche par ordre de gravité : bugs de correction, régressions, cas limites non
    gérés, conditions de course, fuites/ressources, sécurité, puis conventions.
-3. **Vérifie tes hypothèses** avant d'affirmer : un finding doit avoir un scénario
+3. **La sur-ingénierie est un défaut, pas une préférence.** Signale-la comme un
+   finding à part entière, avec le même niveau de preuve que pour un bug :
+   - une abstraction, une interface ou un point d'extension pour **un seul appelant** ;
+   - un paramètre, une option ou une branche que **rien n'appelle** dans le diff ;
+   - de la gestion d'erreur pour un cas que le code rend **impossible** ;
+   - du code nettement plus long que nécessaire — dis en une phrase à quoi
+     ressemblerait la version courte.
+   Un désaccord de goût sur du code qui fait juste la bonne chose n'est pas un
+   finding : ne le mentionne pas.
+4. **Vérifie tes hypothèses** avant d'affirmer : un finding doit avoir un scénario
    d'échec concret (entrée → mauvais résultat). Sinon, marque-le comme incertain.
 
 ## Format de sortie

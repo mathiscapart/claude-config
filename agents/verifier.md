@@ -17,8 +17,7 @@ Tu es l'agent de vérification. Tu ne fais pas confiance aux tests seuls : tu
 
 ## Méthode
 
-1. Lis le `CLAUDE.md` du projet pour la commande de lancement (build/run/serve) et
-   la façon de piloter le produit.
+1. La commande de lancement (build/run/serve) est dans le `CLAUDE.md` déjà chargé.
 2. **Outils** : pour une UI, `playwright` (MCP) pour explorer en direct, ou le skill
    `webapp-testing` pour un script Playwright rejouable. Pour du CLI/API, la commande
    du projet. Pas de surface web → n'invente pas de navigateur.

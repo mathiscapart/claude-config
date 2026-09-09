@@ -9,26 +9,34 @@ Les règles d'orchestration sont dans `~/.claude/CLAUDE.md`.
 
 ## Roster
 
-| Agent | Modèle | Écrit ? | Rôle |
-|---|---|---|---|
-| `project-init` | opus | oui | Bootstrap la couche projet (CLAUDE.md, conventions) |
-| `project-manager` | sonnet | Notion | Backlog, épics, issues (Notion) |
-| `explorer` | haiku | non | Recherche read-only en fan-out, rend une conclusion |
-| `architect` | opus | non | Plans d'implémentation, décisions de design |
-| `feature` | sonnet | oui | Écrit/modifie le code, diffs minimaux |
-| `debugger` | sonnet | oui | Cause racine des bugs, correctif ciblé |
-| `test-engineer` | sonnet | oui | Écrit + exécute les tests (TDD) |
-| `reviewer` | opus | non | Revue de correction (boucle evaluator) |
-| `security-auditor` | sonnet | non | Audit sécurité défensif |
-| `refactorer` | sonnet | oui | Simplifie sans changer le comportement |
-| `verifier` | sonnet | non | Exerce le flux end-to-end réel |
-| `doc-writer` | haiku | oui | Doc, docstrings, CHANGELOG |
-| `git-manager` | haiku | oui | Commits conventionnels, staging sûr |
+| Agent | Modèle | Effort | maxTurns | Écrit ? | Rôle |
+|---|---|---|---|---|---|
+| `explorer` | haiku | — | 8 | non | Recherche read-only en fan-out, rend une conclusion |
+| `git-manager` | haiku | — | 6 | oui | Commits conventionnels, staging sûr |
+| `doc-writer` | sonnet | low | 8 | oui | Doc, docstrings, CHANGELOG |
+| `verifier` | sonnet | low | 12 | non | Exerce le flux end-to-end réel |
+| `feature` | sonnet | medium | 25 | oui | Écrit/modifie le code, diffs minimaux |
+| `refactorer` | sonnet | medium | 15 | oui | Simplifie sans changer le comportement |
+| `test-engineer` | sonnet | medium | 20 | oui | Écrit + exécute les tests (TDD) |
+| `project-manager` | sonnet | medium | 12 | Notion | Backlog, épics, issues |
+| `project-init` | opus | medium | 15 | oui | Bootstrap la couche projet (CLAUDE.md, conventions) |
+| `debugger` | sonnet | **high** | 20 | oui | Cause racine des bugs, correctif ciblé |
+| `security-auditor` | sonnet | **high** | 15 | non | Audit sécurité défensif |
+| `reviewer` | opus | **high** | 12 | non | Revue de correction (boucle evaluator) |
+| `architect` | opus | **high** | 15 | non | Plans d'implémentation, décisions de design |
+
+L'effort sert au **jugement sous incertitude**, pas à la récupération mécanique :
+un `grep` ne raisonne pas mieux avec plus d'effort. Comme la règle de périmètre
+donne déjà sa zone à l'agent, l'effort se concentre là où reste de l'incertitude.
+`explorer` et `git-manager` n'ont pas de champ `effort` : les niveaux disponibles
+dépendent du modèle et ils héritent alors de celui de la session.
 
 ## Orchestration
 
-Le **thread principal Claude Code est l'orchestrateur** — un subagent ne peut pas
-en appeler un autre. Il route selon la table de `~/.claude/CLAUDE.md`.
+Le **thread principal Claude Code est l'orchestrateur**. Les agents de ce dossier
+ont tous un `tools:` restreint sans `Agent` : ils ne peuvent pas re-déléguer, ils
+rendent un résultat. (Ce n'est pas une limite du harness — un agent avec `tools: *`
+le pourrait ; c'est un choix de conception ici.)
 
 ```
 Feature :  architect → feature → test-engineer → reviewer → verifier → git-manager
@@ -50,15 +58,19 @@ subagents classiques — le défaut reste la délégation simple.
   explorer/architect/reviewer/security-auditor/verifier).
 - Isolation de contexte : les agents de recherche rendent une conclusion, pas des
   dumps → économie de tokens.
-- Modèle par coût/qualité : Haiku (tri/doc), Sonnet (implémentation), Opus
-  (architecture/revue critique).
+- Modèle et effort par nature de tâche (voir le roster), plafond `maxTurns`
+  mécanique par agent.
+- **Chaque sous-agent recharge toute la hiérarchie CLAUDE.md** (global + projet) :
+  sa densité est payée à chaque lancement, pas une fois par session. Les agents ne
+  doivent donc jamais le relire avec un outil.
 - Boucle evaluator-optimizer bornée · humain dans la boucle avant tout acte peu
   réversible.
 
 ## Portabilité (autres harness)
 
 Chaque agent a un frontmatter en deux parties :
-- **Natif Claude Code** : `name`, `description`, `model`, `tools`.
+- **Natif Claude Code** : `name`, `description`, `model`, `effort`, `maxTurns`,
+  `color`, `tools`.
 - **Portable** (préfixé, ignoré par Claude Code) : `spec_version`, `role`,
   `handoffs`, `inputs`, `outputs`.
 
