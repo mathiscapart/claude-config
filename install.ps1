@@ -31,6 +31,9 @@ foreach ($item in @("CLAUDE.md", "agents", "settings.json")) {
     Write-Host "symlink : $target -> $source"
 }
 
+# Hooks Orca : restent dans le settings.json local, jamais dans le repo (voir .gitattributes)
+git -C $Repo config filter.strip-orca-hooks.clean "node scripts/strip-orca-hooks.js"
+
 # Skills : on symlinke skill par skill, pour ne pas écraser ceux d'autres outils
 $SkillsDir = Join-Path $Claude "skills"
 New-Item -ItemType Directory -Force -Path $SkillsDir | Out-Null
