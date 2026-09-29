@@ -3,14 +3,54 @@
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
   "model": "opus",
-  "effortLevel": "medium",
-  "theme": "dark",
-  "verbose": true,
-  "preferredNotifChannel": "terminal_bell",
-  "agentPushNotifEnabled": true,
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true
   },
   "promptCacheTtl": "1h",
-  "subagentPromptCacheTtl": "1h"
+  "subagentPromptCacheTtl": "1h",
+  "effortLevel": "medium",
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  },
+  "theme": "dark",
+  "verbose": true,
+  "preferredNotifChannel": "terminal_bell",
+  "agentPushNotifEnabled": true,
+  "autoMode": {
+    "soft_deny": [
+      "$defaults",
+      "Bash(git push --force*)",
+      "Bash(pnpm db:reset*)",
+      "Bash(pnpm db:seed*)"
+    ],
+    "environment": [
+      "### Org-wide",
+      "**Organization**: None configured — solo/hobby project (Scouts et Guides de France instance run by a single self-hoster)",
+      "**Cloud provider(s)**: None configured",
+      "**Repository visibility**: PUBLIC — github.com/mathiscapart/piloti (confirmed via gh)",
+      "**Internal sharing / snippet hosting**: None configured — treat public paste/gist services as outside the trust boundary",
+      "**Secrets management**: None configured — `.env`/`.env.production`/`.env.staging`/`.env.dev` are gitignored; age-encrypted backups (public key only on host, private key kept off-machine)",
+      "**Default / protected branches**: `main` is the default branch; no branch protection rules or rulesets configured (gh confirms rulesets disabled, no protected branches listed) — treat `main` as unprotected by platform, protect via repo convention only (no direct commits, PR required per CLAUDE.md)",
+      "**CI/CD deploy targets**: None configured beyond `.github/workflows` presence — no deploy targets identified in recon",
+      "**Network posture**: None configured",
+      "**Host containment**: None configured — assume Claude Code runs on an ordinary developer machine (Windows, PowerShell) with open internet",
+      "**Source control**: The trusted repo (mathiscapart/piloti) and its GitHub remote only",
+      "**Trusted internal domains**: None configured",
+      "**Trusted cloud buckets**: None configured",
+      "**Key internal services**: piloti.mathiscapart.xyz (prod, self-hosted via cloudflared/Traefik) and staging.votre-domaine.fr-pattern staging host — treat both as this project's own deploy targets, not third-party infra",
+      "**Internal package registry**: None configured",
+      "**Sensitive data locations & audiences**: `.env`, `.env.production`, `.env.staging`, `.env.dev` (secrets: BETTER_AUTH_SECRET, RESEND_API_KEY, VAPID keys, CLOUDFLARE_TUNNEL_TOKEN, BACKUP_AGE_IDENTITY); application database holds RGPD-regulated personal data on minors and families (children, parental consent, incident/finance records) — share only with cleared maintainers",
+      "**Data retention / declassification**: None configured — note repo's own anonymization pattern (`src/lib/anonymize.ts`) is app-level, not a retention policy for Claude Code's own handling",
+      "**Sensitive remote targets**: any namespace/host containing `prod` or `production` as a whole segment — includes `piloti.mathiscapart.xyz` (prod), `.env.production`, `STAGING_*` variables that must never receive prod values",
+      "**Protected deployment namespaces / environments**: None configured — fall back to Sensitive remote targets heuristic; note staging and prod are explicitly meant to stay isolated (per repo docs) — never copy prod secrets/data into staging",
+      "**Protected IaC scopes**: IAM, RBAC, networking, quota, and node-pool resources; anything whose name or tag carries `prod` or `production` as a whole word or name segment — includes `traefik/config/*` and `docker-compose.yml` prod definitions",
+      "### User-specific",
+      "**Primary use of Claude Code**: software development (personal/hobby project — SGDF scout group management app)",
+      "**Trusted repo**: mathiscapart/piloti (public GitHub repo) — working directory and its `origin` remote only; being public, only this repo's own work belongs here, and secrets/personal data are never cleared into it by visibility alone",
+      "**Org-specific CLIs**: None configured — project uses pnpm, standard Next.js/Prisma tooling",
+      "**Routine under piloti/ prefix**: routine pnpm/db/lint/typecheck/test commands scoped to this repo's working directory are expected day-to-day activity"
+    ]
+  },
+  "voiceEnabled": true
 }
