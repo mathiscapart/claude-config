@@ -18,5 +18,8 @@ for item in CLAUDE.md agents settings.json; do
   echo "symlink : $target -> $REPO/$item"
 done
 
+# Hooks Orca : restent dans le settings.json local, jamais dans le repo (voir .gitattributes)
+git -C "$REPO" config filter.strip-orca-hooks.clean "node scripts/strip-orca-hooks.js"
+
 echo "OK. Config Claude installée depuis $REPO."
 echo "Secrets/overrides locaux : place-les dans $CLAUDE/settings.local.json (non versionné)."

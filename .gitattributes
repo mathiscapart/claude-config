@@ -1,0 +1,3 @@
+# Les hooks Orca injectés dans ~/.claude/settings.json (symlinké ici) ne sont pas versionnés.
+# Filtre déclaré par install.sh / install.ps1 (git config filter.strip-orca-hooks.clean).
+settings.json filter=strip-orca-hooks
