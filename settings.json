@@ -4,7 +4,8 @@
   },
   "model": "opus",
   "enabledPlugins": {
-    "frontend-design@claude-plugins-official": true
+    "frontend-design@claude-plugins-official": true,
+    "context-bar@mathis-mods": true
   },
   "promptCacheTtl": "1h",
   "subagentPromptCacheTtl": "1h",
@@ -52,5 +53,13 @@
       "**Routine under piloti/ prefix**: routine pnpm/db/lint/typecheck/test commands scoped to this repo's working directory are expected day-to-day activity"
     ]
   },
-  "voiceEnabled": true
+  "voiceEnabled": true,
+  "extraKnownMarketplaces": {
+    "mathis-mods": {
+      "source": {
+        "source": "github",
+        "repo": "mathiscapart/claude-config"
+      }
+    }
+  }
 }
