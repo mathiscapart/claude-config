@@ -1,0 +1,12 @@
+{
+  "name": "mathis-mods",
+  "description": "Mods et plugins Claude Code relus et figés par Mathis",
+  "owner": { "name": "Mathis Capart" },
+  "plugins": [
+    {
+      "name": "context-bar",
+      "source": "./plugins/context-bar",
+      "description": "Barre du contexte par catégorie au-dessus du prompt (hamzafer/claude-code-mods)"
+    }
+  ]
+}
