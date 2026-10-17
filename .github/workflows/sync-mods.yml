@@ -1,0 +1,68 @@
+name: sync-mods
+
+# Compare chaque mod copié dans plugins/ à son upstream (plugins/upstreams.json).
+# S'il a changé, ouvre une PR avec le diff et la sortie de `claude plugin validate`.
+# Rien n'est fusionné automatiquement: les mods ne sont pas sandboxés, on relit.
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Synchroniser avec l'upstream
+        run: python3 scripts/sync-mods.py | tee sync.log
+
+      - name: Y a-t-il des changements ?
+        id: diff
+        run: |
+          git add -N plugins
+          if git diff --quiet -- plugins; then echo "changed=false" >> "$GITHUB_OUTPUT"; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: actions/setup-node@v4
+        if: steps.diff.outputs.changed == 'true'
+        with:
+          node-version: 22
+
+      - name: Valider avec le CLI Claude Code (non bloquant)
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          npm install -g @anthropic-ai/claude-code >/dev/null 2>&1 || echo "installation du CLI impossible" > validate.log
+          for d in plugins/*/; do
+            echo "### $d"
+            claude plugin validate "$d" 2>&1 || echo "(validate a échoué ou n'est pas disponible)"
+          done | tee -a validate.log || true
+
+      - name: Ouvrir ou mettre à jour la PR
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          branch=chore/sync-mods
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add plugins
+          git commit -m "chore(plugins): synchronise les mods avec l'upstream"
+          git push --force origin "$branch"
+          {
+            echo "Synchro automatique des mods (workflow \`sync-mods\`). **À relire avant de fusionner** : un mod n'est pas sandboxé."
+            echo
+            echo '```'; grep -E '^(CHANGED|ERREUR)|: (ajouté|supprimé|modifié) ' sync.log; echo '```'
+            echo
+            echo "<details><summary>claude plugin validate</summary>"; echo; echo '```'; head -c 20000 validate.log; echo '```'; echo "</details>"
+            echo
+            echo "<details><summary>Diff</summary>"; echo; echo '```diff'; git diff HEAD~1 -- plugins | head -c 40000; echo '```'; echo "</details>"
+            echo
+            echo "À faire : relire le diff, vérifier les lignes \`calls:\` de validate (réseau, écriture de fichiers, process), mettre à jour la section « Appels » d'ORIGIN.md, puis fusionner."
+          } > pr_body.md
+          n=$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')
+          if [ -n "$n" ]; then gh pr edit "$n" --body-file pr_body.md; else gh pr create --base main --head "$branch" --title "chore(plugins): mise à jour des mods depuis l'upstream" --body-file pr_body.md; fi
