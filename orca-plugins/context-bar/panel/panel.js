@@ -51,10 +51,11 @@ function render(state) {
   const compactsAt = r && r.window - (r.categories.find(c => c.kind === 'buffer')?.tokens ?? 0)
   $('status').className = state.status === 'error' ? 'error' : 'muted'
   $('status').textContent =
-    state.status === 'loading' ? 'Mesure…' :
     state.status === 'error' ? state.error :
-    r ? `${tokens(r.total)} sur ${tokens(r.window)} · compacte à ${tokens(compactsAt)}${r.model ? ` · ${r.model}` : ''}` : ''
+    r ? `${tokens(r.total)} sur ${tokens(r.window)} · compacte à ${tokens(compactsAt)}${r.model ? ` · ${r.model}` : ''}` :
+    state.status === 'loading' ? 'Mesure…' : '' // seulement tant qu'il n'y a encore rien à montrer
   $('refresh').disabled = state.status === 'loading'
+  $('refresh').classList.toggle('spin', state.status === 'loading')
   if (!r) return
 
   const level = r.total / compactsAt

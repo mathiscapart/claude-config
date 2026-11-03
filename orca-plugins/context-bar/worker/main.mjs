@@ -41,8 +41,7 @@ export default async function activate(orca) {
       return
     }
     running = true
-    const switched = s.sessionId !== state.sessionId
-    publish({ status: 'loading', sessionId: s.sessionId, title: s.title, ...(switched && { reading: null }) })
+    publish({ status: 'loading', sessionId: s.sessionId, title: s.title }) // l'ancienne lecture reste affichée jusqu'à la nouvelle
     try {
       const reading = await measure(s)
       // Session changée pendant la mesure (épinglage, focus) : résultat périmé, on remesure.
