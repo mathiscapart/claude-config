@@ -55,7 +55,7 @@ function render(state) {
     r ? `${tokens(r.total)} sur ${tokens(r.window)} · compacte à ${tokens(compactsAt)}${r.model ? ` · ${r.model}` : ''}` :
     state.status === 'loading' ? 'Mesure…' : '' // seulement tant qu'il n'y a encore rien à montrer
   $('refresh').disabled = state.status === 'loading'
-  $('refresh').classList.toggle('spin', state.status === 'loading')
+  $('refresh').classList.toggle('loading', state.status === 'loading')
   if (!r) return
 
   const level = r.total / compactsAt

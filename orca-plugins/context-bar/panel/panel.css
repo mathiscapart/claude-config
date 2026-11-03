@@ -44,5 +44,13 @@ select {
   color: var(--orca-foreground);
   font: inherit;
 }
-button.spin { animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+/* Pendant une mesure : trois points en vague à la place de ↻ */
+#refresh { min-width: 26px; height: 20px; display: inline-flex; align-items: center; justify-content: center; }
+#refresh .dots { display: none; gap: 2px; }
+#refresh.loading .icon { display: none; }
+#refresh.loading .dots { display: inline-flex; }
+#refresh .dots i { width: 3px; height: 3px; border-radius: 50%; background: currentColor; animation: wave 1s ease-in-out infinite; }
+#refresh .dots i:nth-child(2) { animation-delay: 0.15s; }
+#refresh .dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes wave { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-3px); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { #refresh .dots i { animation: none; opacity: 0.8; } }
