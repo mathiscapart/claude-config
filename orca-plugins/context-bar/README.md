@@ -35,6 +35,9 @@ le plus proche.
   lecture), aucun fichier de session créé, le transcript d'origine n'est pas modifié. Compter ~3 s
   par mesure, le temps que `claude` démarre ses serveurs MCP.
 - Le bouton ↻ force une nouvelle mesure.
+- Orca arrête un worker inactif depuis quelques minutes et ne le relance pas pour `workspace.changed` :
+  tant qu'il est ouvert, le panneau relaie cet événement au worker et le sollicite chaque minute.
+  Panneau fermé, le suivi s'arrête ; il reprend sur le workspace courant à la réouverture.
 
 C'est une **ré-estimation** avec la configuration actuelle (CLAUDE.md, MCP) : si tu la modifies en
 cours de session, le chiffre peut s'écarter de ce que le process en cours a réellement chargé.

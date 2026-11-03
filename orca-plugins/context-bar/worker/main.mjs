@@ -104,9 +104,15 @@ export default async function activate(orca) {
     }
   }
 
-  orca.events.on('workspace.changed', ({ context }) => {
+  const onWorkspace = context => {
     latest = context
     void follow()
+  }
+  orca.events.on('workspace.changed', ({ context }) => onWorkspace(context))
+  // Relais du panneau : Orca n'envoie pas cet événement à un worker arrêté pour inactivité.
+  orca.panels.handle('workspace.focus', async ({ context }) => {
+    onWorkspace(context)
+    return state
   })
 
   watcher = watch(projectsDir(), { recursive: true }, (_event, name) => {

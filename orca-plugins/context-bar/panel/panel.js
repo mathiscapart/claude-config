@@ -92,3 +92,9 @@ void loadSessions()
 $('refresh').onclick = async () => render(await window.orca.plugin.request('context.refresh', {}))
 if (last) render({ ...last, status: 'loading' }) // tout de suite, avant la réponse du worker
 window.orca.plugin.request('context.get', {}).then(render, e => render({ status: 'error', error: e.message }))
+
+// Orca arrête le worker après quelques minutes sans requête, et ne le relance pas pour
+// workspace.changed : le panneau, actif tant qu'il est ouvert, relaie l'événement (ce qui
+// relance le worker) et le sollicite toutes les minutes pour qu'il garde sa surveillance.
+window.orca.on('workspace.changed', ({ context }) => void window.orca.plugin.request('workspace.focus', { context }).catch(() => {}))
+setInterval(() => void window.orca.plugin.request('context.get', {}).then(render, () => {}), 60_000)
