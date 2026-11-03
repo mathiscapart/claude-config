@@ -69,8 +69,21 @@ export function inspect(file) {
   return { sessionId: basename(file, '.jsonl'), cwd, turnId: turn?.uuid ?? null, title }
 }
 
-/** Lance `claude -p /context` sur une copie éphémère de la session. */
-export function measure({ sessionId, cwd }, { signal, timeoutMs = 60_000 } = {}) {
+/**
+ * La sortie JSON de `claude -p /context` → la lecture, ou null quand `/context` n'a rien renvoyé
+ * (observé par intermittence, cause non identifiée : on réessaiera au tour suivant).
+ */
+export function readResult(stdout) {
+  const result = JSON.parse(stdout).find(m => m.type === 'result')
+  if (result?.num_turns !== 0) throw new Error('réponse inattendue : /context a été envoyé au modèle')
+  if (!result.result?.trim()) return null
+  const reading = parseContext(result.result)
+  if (!reading) throw new Error('sortie de /context illisible')
+  return reading
+}
+
+/** Lance `claude -p /context` sur une copie éphémère de la session. Résout null si la sortie est vide. */
+export function measure({ sessionId, cwd }, { signal, timeoutMs = 60_000, onEmpty } = {}) {
   const args = ['-p', '/context', '--resume', sessionId, '--fork-session', '--no-session-persistence', '--output-format', 'json']
   return new Promise((resolve, reject) => {
     const child = spawn('claude', args, { cwd: cwd ?? undefined, stdio: ['ignore', 'pipe', 'pipe'], signal, timeout: timeoutMs, windowsHide: true })
@@ -81,10 +94,8 @@ export function measure({ sessionId, cwd }, { signal, timeoutMs = 60_000 } = {})
     child.on('error', reject)
     child.on('close', code => {
       try {
-        const result = JSON.parse(out).find(m => m.type === 'result')
-        if (result?.num_turns !== 0) throw new Error('réponse inattendue : /context a été envoyé au modèle')
-        const reading = parseContext(result.result ?? '')
-        if (!reading) throw new Error('sortie de /context illisible')
+        const reading = readResult(out)
+        if (!reading) onEmpty?.(`/context vide (code ${code})${err ? ` — ${err.trim().slice(0, 300)}` : ''}`)
         resolve(reading)
       } catch (e) {
         reject(new Error(`claude a échoué (code ${code}) : ${e.message}${err ? ` — ${err.trim().slice(0, 300)}` : ''}`))

@@ -45,12 +45,13 @@ export default async function activate(orca) {
     // L'ancienne lecture reste affichée jusqu'à la nouvelle ; l'historique suit tout de suite la session.
     publish({ status: 'loading', sessionId: s.sessionId, title: s.title, ...(s.sessionId !== state.sessionId && { history: readHistory(s.sessionId) }) })
     try {
-      const reading = await measure(s)
+      const reading = await measure(s, { onEmpty: orca.log })
       // Session changée pendant la mesure (épinglage, focus) : résultat périmé, on remesure.
       if (target() !== file) again = true
       else {
-        measured = key
-        publish({ status: 'ready', reading, history: record(s.sessionId, s.turnId, reading), error: null })
+        measured = key // même vide : pas de relance à chaque écriture du transcript, on attend le tour suivant (ou ↻)
+        if (reading) publish({ status: 'ready', reading, history: record(s.sessionId, s.turnId, reading), error: null })
+        else publish({ status: 'busy', error: null }) // la lecture précédente reste affichée
       }
     } catch (e) {
       orca.log(String(e))
@@ -150,7 +151,9 @@ export default async function activate(orca) {
     measuring.add(sessionId)
     try {
       const s = inspect(file)
-      record(s.sessionId, s.turnId, await measure(s))
+      const reading = await measure(s, { onEmpty: orca.log })
+      if (!reading) throw new Error('/context n’a rien renvoyé pour cette session, réessaie dans un instant.')
+      record(s.sessionId, s.turnId, reading)
     } finally {
       measuring.delete(sessionId)
     }

@@ -46,8 +46,11 @@ function render(state) {
   $('status').className = state.status === 'error' ? 'error' : 'muted'
   $('status').textContent =
     state.status === 'error' ? state.error :
-    r ? `${tokens(r.total)} sur ${tokens(r.window)} · compacte à ${tokens(compactsAt)}${r.model ? ` · ${r.model}` : ''}` :
+    r ? `${tokens(r.total)} sur ${tokens(r.window)} · compacte à ${tokens(compactsAt)}${r.model ? ` · ${r.model}` : ''}${state.status === 'busy' ? ' · mesure précédente' : ''}` :
+    state.status === 'busy' ? 'Mesure indisponible, nouvel essai au prochain tour.' :
     state.status === 'loading' ? 'Mesure…' : '' // seulement tant qu'il n'y a encore rien à montrer
+  // /context renvoie parfois une sortie vide : on garde la dernière lecture plutôt qu'une erreur.
+  $('status').title = state.status === 'busy' ? '/context n’a rien renvoyé pour ce tour. ↻ pour réessayer.' : ''
   $('refresh').disabled = state.status === 'loading'
   $('refresh').classList.toggle('loading', state.status === 'loading')
   if (!r) return

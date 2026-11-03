@@ -1,10 +1,10 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync, mkdirSync, utimesSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, readFileSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import { inspect, latestTranscript, projectSlug, recentSessions } from '../worker/session.mjs'
+import { inspect, latestTranscript, projectSlug, readResult, recentSessions } from '../worker/session.mjs'
 
 const line = o => JSON.stringify(o) + '\n'
 
@@ -51,4 +51,14 @@ test('recentSessions : du plus récent au plus ancien, avec titre et projet', ()
     ['bbb', null, 'repo-b'],
     ['aaa', 'Titre A', 'repo-a'],
   ])
+})
+
+test('readResult : lecture, sortie vide (null), envoi au modèle (erreur)', () => {
+  const out = o => JSON.stringify([{ type: 'system' }, { type: 'result', num_turns: 0, ...o }])
+  const md = readFileSync(new URL('./context-output.md', import.meta.url), 'utf8')
+  assert.equal(readResult(out({ result: md })).total, 57_100)
+  assert.equal(readResult(out({ result: '' })), null)
+  assert.equal(readResult(out({ result: '  \n' })), null)
+  assert.throws(() => readResult(out({ num_turns: 1, result: 'Bonjour' })), /envoyé au modèle/)
+  assert.throws(() => readResult(out({ result: 'Unknown command' })), /illisible/)
 })
