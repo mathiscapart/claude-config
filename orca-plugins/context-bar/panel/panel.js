@@ -39,15 +39,20 @@ async function loadSessions() {
   renderSessions()
 }
 
+// Dernier état complet (avec une lecture). Le worker peut redémarrer (Orca l'arrête quand il est
+// inactif) et renvoyer un état vide : on garde alors l'affichage précédent jusqu'à la nouvelle mesure.
+// Gardé aussi dans localStorage pour qu'un rechargement du panneau ne parte pas de rien.
+let last = JSON.parse(localStorage.getItem('last') ?? 'null')
+
 function render(state) {
-  current = state
-  renderSessions()
-  const r = state.reading
-  if (!r) {
-    $('pct').textContent = ''
-    $('bar').replaceChildren()
-    $('legend').replaceChildren()
+  if (state.reading) {
+    last = state
+    localStorage.setItem('last', JSON.stringify(state))
   }
+  const known = Object.fromEntries(Object.entries(state).filter(([, v]) => v != null))
+  current = { ...last, ...known, pinned: state.pinned ?? null, error: state.error ?? null }
+  renderSessions()
+  const r = current.reading
   const compactsAt = r && r.window - (r.categories.find(c => c.kind === 'buffer')?.tokens ?? 0)
   $('status').className = state.status === 'error' ? 'error' : 'muted'
   $('status').textContent =
@@ -85,4 +90,5 @@ $('session').onfocus = () => void loadSessions() // liste à jour à chaque ouve
 $('session').onchange = async e => render(await window.orca.plugin.request('session.pin', { sessionId: e.target.value || null }))
 void loadSessions()
 $('refresh').onclick = async () => render(await window.orca.plugin.request('context.refresh', {}))
+if (last) render({ ...last, status: 'loading' }) // tout de suite, avant la réponse du worker
 window.orca.plugin.request('context.get', {}).then(render, e => render({ status: 'error', error: e.message }))
