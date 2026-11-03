@@ -70,24 +70,30 @@ export default async function activate(orca) {
     return file ? statSync(file).mtimeMs : 0
   }
 
+  // `workspace.changed` part aussi à chaque renommage de terminal (les agents le font sans cesse) :
+  // on ne résout que si le workspace change vraiment (nom, branche, ids des terminaux, pas leurs titres).
+  let followedKey = null
+  let followSeq = 0
+
   async function follow(context) {
-    focusDir = null
-    let workspace = null
-    if (context) {
-      try {
-        const { worktrees } = await orcaCli('worktree', 'list')
-        const path = await pickPath(context, worktrees, async () => (await orcaCli('terminal', 'list')).terminals, lastActivity)
-        if (path) {
-          focusDir = dirOf(path)
-          orca.log(`workspace suivi : ${path}`)
-          workspace = context.displayName
-        }
-      } catch (e) {
-        orca.log(`workspace introuvable : ${e.message}`)
-      }
+    if (!context) return // vue chat ou rien au premier plan : on garde le dernier workspace suivi
+    const key = JSON.stringify([context.displayName, context.branch, context.terminals.map(t => t.id).sort()])
+    if (key === followedKey) return
+    followedKey = key
+    const seq = ++followSeq
+    try {
+      const { worktrees } = await orcaCli('worktree', 'list')
+      const path = await pickPath(context, worktrees, async () => (await orcaCli('terminal', 'list')).terminals, lastActivity)
+      if (seq !== followSeq || !path) return // dépassé par un changement plus récent, ou inconnu : on garde l'ancien
+      if (dirOf(path) === focusDir) return
+      focusDir = dirOf(path) // remplacé seulement une fois le nouveau résolu
+      orca.log(`workspace suivi : ${path}`)
+      publish({ workspace: context.displayName })
+      if (!state.pinned) void refresh()
+    } catch (e) {
+      if (seq === followSeq) followedKey = null // réessayer au prochain événement
+      orca.log(`workspace introuvable : ${e.message}`)
     }
-    publish({ workspace })
-    if (!state.pinned) void refresh()
   }
 
   orca.events.on('workspace.changed', ({ context }) => void follow(context))
