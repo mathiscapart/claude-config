@@ -23,19 +23,18 @@ function colorOf(c, i) {
 
 function render(state) {
   const r = state.reading
+  const compactsAt = r && r.window - (r.categories.find(c => c.kind === 'buffer')?.tokens ?? 0)
   $('status').className = state.status === 'error' ? 'error' : 'muted'
   $('status').textContent =
     state.status === 'loading' ? 'Mesure…' :
     state.status === 'error' ? state.error :
-    state.at ? `Mesuré à ${new Date(state.at).toLocaleTimeString()}` : ''
+    r ? `${tokens(r.total)} sur ${tokens(r.window)} · compacte à ${tokens(compactsAt)}${r.model ? ` · ${r.model}` : ''}` : ''
   $('refresh').disabled = state.status === 'loading'
   if (!r) return
 
-  const compactsAt = r.window - (r.categories.find(c => c.kind === 'buffer')?.tokens ?? 0)
   const level = r.total / compactsAt
   $('pct').textContent = ` ${r.percent}% `
   $('pct').className = `pct ${level >= 0.9 ? 'high' : level >= 0.7 ? 'warn' : 'ok'}`
-  $('head').textContent = `${tokens(r.total)} sur ${tokens(r.window)} · compacte à ${tokens(compactsAt)}${r.model ? ` · ${r.model}` : ''}`
 
   let used = 0
   const rows = r.categories.map(c => ({ ...c, color: colorOf(c, c.kind === 'used' ? used++ : 0) }))

@@ -5,14 +5,14 @@ body {
   color: var(--orca-foreground);
   background: var(--orca-background);
 }
-header, footer { display: flex; justify-content: space-between; align-items: center; }
+header, footer { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+header { margin-bottom: 8px; }
 .diamond { color: #d97757; }
 .muted { color: var(--orca-muted-foreground); }
 .pct { padding: 0 6px; border-radius: 4px; font-weight: 600; color: #000; }
 .pct.ok { background: #9ece6a; }
 .pct.warn { background: #e0af68; }
 .pct.high { background: #f7768e; }
-#head { margin: 4px 0 8px; }
 .bar { display: flex; height: 12px; border-radius: 3px; overflow: hidden; background: var(--orca-muted); }
 .bar > span { height: 100%; }
 .bar > .free { background: transparent; }
