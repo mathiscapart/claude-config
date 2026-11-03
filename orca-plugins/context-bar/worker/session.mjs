@@ -1,27 +1,45 @@
 // Trouve la session Claude Code active et la mesure avec `/context`, sans appel au modèle.
 import { spawn } from 'node:child_process'
-import { openSync, readSync, closeSync, readdirSync, statSync } from 'node:fs'
+import { closeSync, existsSync, openSync, readdirSync, readSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { basename, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 
 import { parseContext } from './parse.mjs'
 
 export const projectsDir = () => join(process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude'), 'projects')
 
-/** Le transcript principal (`<projet>/<session>.jsonl`) écrit le plus récemment. */
-export function latestTranscript(dir = projectsDir()) {
-  let best = null
-  for (const project of readdirSync(dir, { withFileTypes: true })) {
-    if (!project.isDirectory()) continue
-    const pdir = join(dir, project.name)
-    for (const f of readdirSync(pdir)) {
-      if (!f.endsWith('.jsonl')) continue
-      const file = join(pdir, f)
-      const mtime = statSync(file).mtimeMs
-      if (!best || mtime > best.mtime) best = { file, mtime }
+/** Nom du dossier où Claude Code range les sessions d'un répertoire de travail. */
+export const projectSlug = path => path.replace(/[^a-zA-Z0-9]/g, '-')
+
+/** Transcripts principaux (`<projet>/<session>.jsonl`, pas les sous-agents), du plus récent au plus ancien. */
+function transcripts(root, only) {
+  const dirs = only ? [only] : readdirSync(root, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => join(root, d.name))
+  const out = []
+  for (const dir of dirs) {
+    if (!existsSync(dir)) continue
+    for (const f of readdirSync(dir)) {
+      if (f.endsWith('.jsonl')) out.push({ file: join(dir, f), mtime: statSync(join(dir, f)).mtimeMs })
     }
   }
-  return best?.file ?? null
+  return out.sort((x, y) => y.mtime - x.mtime)
+}
+
+/** Le transcript écrit le plus récemment, partout ou dans le seul dossier `only`. */
+export function latestTranscript(root = projectsDir(), only) {
+  return transcripts(root, only)[0]?.file ?? null
+}
+
+/** Les `n` sessions les plus récentes, pour le sélecteur. */
+export function recentSessions(root = projectsDir(), n = 15) {
+  return transcripts(root).slice(0, n).map(({ file, mtime }) => {
+    const s = inspect(file)
+    return { sessionId: s.sessionId, title: s.title, project: s.cwd ? basename(s.cwd) : basename(dirname(file)), mtime }
+  })
+}
+
+/** Le fichier d'une session donnée, s'il existe encore. */
+export function transcriptOf(sessionId, root = projectsDir()) {
+  return transcripts(root).find(t => basename(t.file, '.jsonl') === sessionId)?.file ?? null
 }
 
 /** Les dernières lignes JSON du fichier (lit seulement la fin). */
@@ -42,12 +60,13 @@ function tailLines(file, bytes = 256 * 1024) {
   }
 }
 
-/** { sessionId, cwd, turnId }: turnId = uuid de la dernière réponse finale, null si aucune. */
+/** { sessionId, cwd, turnId, title }: turnId = uuid de la dernière réponse finale, null si aucune. */
 export function inspect(file) {
   const lines = tailLines(file)
   const cwd = lines.findLast(o => typeof o.cwd === 'string')?.cwd ?? null
   const turn = lines.findLast(o => o.type === 'assistant' && o.message?.stop_reason === 'end_turn')
-  return { sessionId: basename(file, '.jsonl'), cwd, turnId: turn?.uuid ?? null }
+  const title = lines.findLast(o => o.type === 'ai-title')?.aiTitle ?? null
+  return { sessionId: basename(file, '.jsonl'), cwd, turnId: turn?.uuid ?? null, title }
 }
 
 /** Lance `claude -p /context` sur une copie éphémère de la session. */

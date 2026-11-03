@@ -1,8 +1,11 @@
-// Surveille ~/.claude/projects et remesure la session active à chaque fin de tour.
-import { watch } from 'node:fs'
-import { sep } from 'node:path'
+// Mesure la session suivie à chaque fin de tour, changement de session ou de workspace.
+// Session suivie : celle épinglée dans le panneau, sinon (« Auto ») la plus récente du
+// workspace qui a le focus dans Orca, sinon la plus récente tout court.
+import { statSync, watch } from 'node:fs'
+import { join, sep } from 'node:path'
 
-import { inspect, latestTranscript, measure, projectsDir } from './session.mjs'
+import { inspect, latestTranscript, measure, projectSlug, projectsDir, recentSessions, transcriptOf } from './session.mjs'
+import { orcaCli, pickPath } from './workspace.mjs'
 
 const DEBOUNCE_MS = 1500
 
@@ -10,8 +13,8 @@ let watcher = null
 
 /** @type {import('orca/worker').Activate} */
 export default async function activate(orca) {
-  /** Dernière lecture envoyée au panneau. */
-  let state = { status: 'idle', reading: null, error: null, sessionId: null, cwd: null, at: null }
+  let state = { status: 'idle', reading: null, error: null, sessionId: null, title: null, pinned: null, workspace: null }
+  let focusDir = null // dossier Claude du workspace qui a le focus
   let measured = null // `${sessionId}:${turnId}` déjà mesuré
   let running = false
   let again = false
@@ -22,19 +25,32 @@ export default async function activate(orca) {
     orca.panels.post('context.changed', state)
   }
 
+  function target() {
+    if (state.pinned) return transcriptOf(state.pinned)
+    return (focusDir && latestTranscript(projectsDir(), focusDir)) || latestTranscript()
+  }
+
   async function refresh(force = false) {
     if (running) return void (again = true)
-    const file = latestTranscript()
+    const file = target()
     if (!file) return publish({ status: 'idle', error: 'Aucune session Claude Code trouvée.' })
     const s = inspect(file)
     const key = `${s.sessionId}:${s.turnId}`
-    if (!force && key === measured) return
+    if (!force && key === measured && s.sessionId === state.sessionId) {
+      if (s.title !== state.title) publish({ title: s.title })
+      return
+    }
     running = true
-    publish({ status: 'loading', sessionId: s.sessionId, cwd: s.cwd })
+    const switched = s.sessionId !== state.sessionId
+    publish({ status: 'loading', sessionId: s.sessionId, title: s.title, ...(switched && { reading: null }) })
     try {
       const reading = await measure(s)
-      measured = key
-      publish({ status: 'ready', reading, error: null, at: Date.now() })
+      // Session changée pendant la mesure (épinglage, focus) : résultat périmé, on remesure.
+      if (target() !== file) again = true
+      else {
+        measured = key
+        publish({ status: 'ready', reading, error: null })
+      }
     } catch (e) {
       orca.log(String(e))
       publish({ status: 'error', error: e.message })
@@ -47,7 +63,36 @@ export default async function activate(orca) {
     }
   }
 
-  // Seuls les transcripts principaux comptent : `<projet>/<session>.jsonl`, pas les sous-agents.
+  // Le workspace qui a le focus → son chemin → le dossier où Claude range ses sessions.
+  // (workspace.list n'existe qu'à partir de l'API hôte 1.3 : on passe par le CLI d'Orca.)
+  const dirOf = path => join(projectsDir(), projectSlug(path))
+  const lastActivity = path => {
+    const file = latestTranscript(projectsDir(), dirOf(path))
+    return file ? statSync(file).mtimeMs : 0
+  }
+
+  async function follow(context) {
+    focusDir = null
+    let workspace = null
+    if (context) {
+      try {
+        const { worktrees } = await orcaCli('worktree', 'list')
+        const path = await pickPath(context, worktrees, async () => (await orcaCli('terminal', 'list')).terminals, lastActivity)
+        if (path) {
+          focusDir = dirOf(path)
+          orca.log(`workspace suivi : ${path}`)
+          workspace = context.displayName
+        }
+      } catch (e) {
+        orca.log(`workspace introuvable : ${e.message}`)
+      }
+    }
+    publish({ workspace })
+    if (!state.pinned) void refresh()
+  }
+
+  orca.events.on('workspace.changed', ({ context }) => void follow(context))
+
   watcher = watch(projectsDir(), { recursive: true }, (_event, name) => {
     if (!name || !name.endsWith('.jsonl') || name.split(sep).length !== 2) return
     clearTimeout(timer)
@@ -60,6 +105,12 @@ export default async function activate(orca) {
   })
   orca.panels.handle('context.refresh', async () => {
     void refresh(true)
+    return state
+  })
+  orca.panels.handle('sessions.list', async () => recentSessions())
+  orca.panels.handle('session.pin', async ({ sessionId }) => {
+    publish({ pinned: sessionId ?? null })
+    void refresh()
     return state
   })
 }

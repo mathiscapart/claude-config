@@ -34,3 +34,13 @@ button {
   cursor: pointer;
 }
 .error { color: var(--orca-destructive); }
+select {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 2px 4px;
+  border: 1px solid var(--orca-border);
+  border-radius: 4px;
+  background: var(--orca-input, var(--orca-secondary));
+  color: var(--orca-foreground);
+  font: inherit;
+}

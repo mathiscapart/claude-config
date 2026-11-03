@@ -10,8 +10,16 @@ le plus proche.
 ## Fonctionnement
 
 - Le worker (`worker/main.mjs`) surveille `~/.claude/projects` (ou `$CLAUDE_CONFIG_DIR/projects`).
-- La session suivie est le transcript principal écrit le plus récemment : celle avec laquelle tu
-  parles. Avec plusieurs chats actifs en parallèle, le panneau suit le dernier qui a écrit.
+- La session suivie se choisit dans le sélecteur en haut du panneau :
+  - **Auto** (par défaut) : la session la plus récente du workspace qui a le focus dans Orca
+    (événement `workspace.changed`), sinon la plus récente tout court. Changer de workspace
+    rafraîchit le panneau aussitôt. Entre deux chats d'un même workspace, c'est le dernier qui a
+    écrit qui gagne : Orca n'expose pas aux plugins l'onglet de chat qui a le focus.
+  - **une session précise** parmi les 15 plus récentes (titre généré par Claude, projet) : elle
+    reste épinglée jusqu'au retour en Auto.
+- Le chemin du workspace vient du CLI d'Orca (`orca worktree list`) : la méthode `workspace.list`
+  n'existe qu'à partir de l'API hôte 1.3. Pour départager des workspaces homonymes (plusieurs
+  `main`), un terminal du workspace tranche, sinon celui dont la session Claude est la plus récente.
 - À chaque fin de tour (`stop_reason: end_turn`) ou changement de session, il lance :
 
   ```
@@ -35,7 +43,8 @@ orca plugin open local.context-bar
 ```
 
 Le plugin est `trusted-worker` : son worker tourne en Node avec les droits de ton compte (il lit
-`~/.claude/projects` et lance `claude`). Aucune capability Orca n'est demandée.
+`~/.claude/projects`, lance `claude` et le CLI `orca`). Seule capability Orca demandée :
+`workspace:read`, pour savoir quel workspace a le focus.
 
 ## Tests
 

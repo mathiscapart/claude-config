@@ -21,8 +21,33 @@ function colorOf(c, i) {
   return c.name === 'Messages' ? MESSAGES : PALETTE[i % PALETTE.length]
 }
 
+let current = {}
+let sessions = []
+const label = s => `${s.title ?? s.sessionId.slice(0, 8)} — ${s.project}`
+
+function renderSessions() {
+  const auto = el('option', { value: '' }, `Auto · ${current.title ?? current.sessionId?.slice(0, 8) ?? '…'}${current.workspace ? ` (${current.workspace})` : ''}`)
+  const list = current.pinned && !sessions.some(s => s.sessionId === current.pinned)
+    ? [{ sessionId: current.pinned, title: current.title, project: '…' }, ...sessions] // épinglée mais sortie des récentes
+    : sessions
+  $('session').replaceChildren(auto, ...list.map(s => el('option', { value: s.sessionId }, label(s))))
+  $('session').value = current.pinned ?? ''
+}
+
+async function loadSessions() {
+  sessions = await window.orca.plugin.request('sessions.list', {})
+  renderSessions()
+}
+
 function render(state) {
+  current = state
+  renderSessions()
   const r = state.reading
+  if (!r) {
+    $('pct').textContent = ''
+    $('bar').replaceChildren()
+    $('legend').replaceChildren()
+  }
   const compactsAt = r && r.window - (r.categories.find(c => c.kind === 'buffer')?.tokens ?? 0)
   $('status').className = state.status === 'error' ? 'error' : 'muted'
   $('status').textContent =
@@ -55,5 +80,8 @@ function render(state) {
 }
 
 window.orca.plugin.on('context.changed', render)
+$('session').onfocus = () => void loadSessions() // liste à jour à chaque ouverture
+$('session').onchange = async e => render(await window.orca.plugin.request('session.pin', { sessionId: e.target.value || null }))
+void loadSessions()
 $('refresh').onclick = async () => render(await window.orca.plugin.request('context.refresh', {}))
 window.orca.plugin.request('context.get', {}).then(render, e => render({ status: 'error', error: e.message }))

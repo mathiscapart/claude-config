@@ -3,8 +3,8 @@
   "execution": "trusted-worker",
   "id": "context-bar",
   "name": "Context Bar",
-  "version": "0.1.0",
-  "description": "Ce qui remplit la fenêtre de contexte de la session Claude Code active, par catégorie, comme /context.",
+  "version": "0.2.0",
+  "description": "Ce qui remplit la fenêtre de contexte de la session Claude Code suivie (workspace actif ou session choisie), par catégorie, comme /context.",
   "license": "MIT",
   "engines": {
     "orca": ">=1.4.246"
@@ -19,7 +19,16 @@
         "icon": "gauge",
         "entry": "panel/index.html"
       }
+    ],
+    "events": [
+      {
+        "on": "workspace.changed"
+      }
     ]
   },
-  "capabilities": []
+  "capabilities": [
+    {
+      "kind": "workspace:read"
+    }
+  ]
 }
