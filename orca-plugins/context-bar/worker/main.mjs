@@ -4,7 +4,7 @@
 import { watch } from 'node:fs'
 import { join, sep } from 'node:path'
 
-import { readHistory, record } from './history.mjs'
+import { lastReadings, readHistory, record } from './history.mjs'
 import { inspect, latestTranscript, measure, projectSlug, projectsDir, recentSessions, transcriptOf } from './session.mjs'
 import { orcaCli, pickPath } from './workspace.mjs'
 
@@ -132,6 +132,29 @@ export default async function activate(orca) {
     return state
   })
   orca.panels.handle('sessions.list', async () => recentSessions())
+
+  // Panneau Conversations : les sessions récentes avec leur dernière mesure enregistrée (aucun
+  // `claude` lancé), l'historique d'une session, et une mesure à la demande d'une session précise.
+  orca.panels.handle('conversations.list', async () => {
+    const sessions = recentSessions(projectsDir(), 40)
+    const last = lastReadings(sessions.map(s => s.sessionId))
+    return { tracked: state.sessionId, sessions: sessions.map(s => ({ ...s, last: last[s.sessionId] ?? null })) }
+  })
+  orca.panels.handle('conversation.history', async ({ sessionId }) => readHistory(sessionId))
+  const measuring = new Set()
+  orca.panels.handle('conversation.measure', async ({ sessionId }) => {
+    const file = transcriptOf(sessionId)
+    if (!file) throw new Error('Session introuvable.')
+    if (sessionId === state.sessionId) return void (await refresh(true)) // la session suivie : même chemin que ↻
+    if (measuring.has(sessionId)) return
+    measuring.add(sessionId)
+    try {
+      const s = inspect(file)
+      record(s.sessionId, s.turnId, await measure(s))
+    } finally {
+      measuring.delete(sessionId)
+    }
+  })
   orca.panels.handle('session.pin', async ({ sessionId }) => {
     publish({ pinned: sessionId ?? null })
     void refresh()

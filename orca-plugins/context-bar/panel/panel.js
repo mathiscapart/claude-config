@@ -1,19 +1,8 @@
 // Dessine la lecture que le worker envoie : barre empilée par catégorie, puis légende.
-// Palette reprise du mod context-bar (plugins/context-bar/hooks/register.tsx, MIT).
-const PALETTE = ['#7aa2f7', '#7dcfff', '#bb9af7', '#9ece6a', '#e0af68', '#f7768e', '#73daca', '#ff9e64', '#c0caf5']
-const MESSAGES = '#d97757'
-const GREY = '#808080'
+import { GREY, MESSAGES, PALETTE, drawHistory, el, tokens } from './common.js'
 
 const $ = id => document.getElementById(id)
-const tokens = n => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${+(n / 1e3).toFixed(1)}k` : String(n))
 const share = (n, w) => `${((100 * n) / w).toFixed(1)}%`
-
-function el(tag, attrs = {}, text) {
-  const e = document.createElement(tag)
-  Object.assign(e, attrs)
-  if (text !== undefined) e.textContent = text
-  return e
-}
 
 function colorOf(c, i) {
   if (c.kind === 'free' || c.kind === 'deferred') return 'transparent'
@@ -74,7 +63,7 @@ function render(state) {
   bar.replaceChildren(...rows.filter(c => c.kind !== 'deferred' && c.tokens > 0).map(c =>
     el('span', { className: c.kind, title: `${c.name} : ${tokens(c.tokens)}`, style: `width:${(100 * c.tokens) / r.window}%;background:${c.kind === 'buffer' ? '' : c.color}` })))
   bar.setAttribute('aria-label', `${r.percent}% du contexte utilisé`)
-  renderHistory(current.history ?? [])
+  drawHistory($('history'), current.history ?? [])
 
   $('legend').replaceChildren(...rows.map(c => {
     const li = el('li', { className: c.kind === 'used' ? '' : 'dim', title: c.kind === 'deferred' ? 'Chargé à la demande, hors du total' : '' })
@@ -86,25 +75,6 @@ function render(state) {
     else li.append(...row)
     return li
   }))
-}
-
-// Évolution du total, une mesure par tour, de 0 au maximum atteint (le seuil d'auto-compaction
-// écraserait la courbe sur une fenêtre de 1M). Une chute de plus de 30 % compte comme une compaction.
-function renderHistory(h) {
-  $('history').hidden = h.length === 0
-  if (!h.length) return
-  const max = Math.max(...h.map(e => e.total))
-  const y = t => (2 + 21 * (1 - t / max)).toFixed(2)
-  const x = i => (h.length === 1 ? 100 : (100 * i) / (h.length - 1)).toFixed(2)
-  $('history').querySelector('polyline').setAttribute('points', h.map((e, i) => `${x(i)},${y(e.total)}`).join(' ') + (h.length === 1 ? ` 0,${y(h[0].total)}` : ''))
-  const compactions = h.filter((e, i) => i && e.total < 0.7 * h[i - 1].total).length
-  const delta = h.length > 1 ? h.at(-1).total - h.at(-2).total : null
-  $('history').querySelector('.caption').textContent = [
-    `${h.length} mesure${h.length > 1 ? 's' : ''}`,
-    delta !== null && `${delta >= 0 ? '+' : '−'}${tokens(Math.abs(delta))} depuis la précédente`,
-    compactions && `${compactions} compaction${compactions > 1 ? 's' : ''}`,
-  ].filter(Boolean).join(' · ')
-  $('history').title = h.slice(-8).map(e => `${new Date(e.at).toLocaleTimeString()} : ${tokens(e.total)}`).join('\n')
 }
 
 // Détail d'une catégorie (tableaux par élément de /context). Les sections ouvertes le restent

@@ -44,6 +44,20 @@ le plus proche.
   le total mesure après mesure, l'écart avec la précédente et le nombre de compactions (chute de
   plus de 30 %). L'historique commence à la première mesure : rien n'est reconstitué pour les tours
   passés.
+
+## Panneau Conversations
+
+Un second panneau liste les 40 sessions les plus récentes, tous projets confondus, avec leur
+dernière mesure enregistrée dans l'historique (pourcentage, total, jauge jusqu'au seuil de
+compaction). Ouvrir la liste ne lance pas `claude`. Une ligne se déplie sur la répartition par
+catégorie, la courbe de l'historique et deux boutons :
+
+- **Mesurer** lance `/context` sur cette session (~3 s, même garde-fou `num_turns: 0`) et l'ajoute
+  à son historique, sans changer la session suivie ;
+- **Suivre** épingle la session dans le panneau Context Bar.
+
+La session suivie par Context Bar est marquée ●. La liste se recharge à chaque mesure de la
+session suivie, au retour sur le panneau, ou avec ↻.
 - Orca arrête un worker inactif depuis quelques minutes et ne le relance pas pour `workspace.changed` :
   tant qu'il est ouvert, le panneau relaie cet événement au worker et le sollicite chaque minute.
   Panneau fermé, le suivi s'arrête ; il reprend sur le workspace courant à la réouverture.
@@ -56,7 +70,7 @@ Les lignes « (deferred) » sont listées par `/context` mais hors du total ; el
 
 ```sh
 orca plugin dev load orca-plugins/context-bar   # puis --approve <empreinte> affichée
-orca plugin open local.context-bar
+orca plugin open local.context-bar                  # --panel conversations pour la liste
 ```
 
 Le plugin est `trusted-worker` : son worker tourne en Node avec les droits de ton compte (il lit
