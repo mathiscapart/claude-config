@@ -1,0 +1,21 @@
+/* Complète panel.css pour le panneau Conversations */
+ul.conversations { margin: 0 0 8px; }
+li.conv { display: block; padding: 6px 0; border-bottom: 1px solid var(--orca-border); }
+li.conv summary { cursor: pointer; list-style: none; }
+li.conv summary::-webkit-details-marker { display: none; }
+li.conv .row { display: flex; gap: 6px; align-items: baseline; }
+li.conv .title { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+li.conv .meta { font-size: 11px; }
+li.conv .meta .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+li.conv.tracked .title::before { content: '● '; color: #d97757; }
+.gauge { height: 3px; margin-top: 3px; border-radius: 2px; background: var(--orca-muted); overflow: hidden; }
+.gauge > span { display: block; height: 100%; }
+.gauge > .ok { background: #9ece6a; }
+.gauge > .warn { background: #e0af68; }
+.gauge > .high { background: #f7768e; }
+li.conv .body { padding: 6px 0 2px; }
+li.conv .body .bar { height: 8px; }
+li.conv .body ul.items { margin-left: 0; }
+li.conv .body p { margin: 4px 0; }
+.actions { display: flex; gap: 6px; margin-top: 4px; }
+.actions button { padding: 1px 8px; }

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="panel.css" />
+</head>
+<body>
+  <header>
+    <span><span class="diamond">◆</span> <strong>context</strong></span>
+    <span id="pct" class="pct"></span>
+  </header>
+  <select id="session" title="Session suivie"></select>
+  <div id="bar" class="bar" role="img"></div>
+  <div id="history" class="history" hidden>
+    <svg viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><polyline /></svg>
+    <span class="caption muted"></span>
+  </div>
+  <ul id="legend"></ul>
+  <footer>
+    <span id="status" class="muted">Mesure…</span>
+    <button id="refresh" type="button" title="Remesurer"><span class="icon">↻</span><span class="dots" aria-label="Mesure en cours"><i></i><i></i><i></i></span></button>
+  </footer>
+  <script type="module" src="panel.js"></script>
+</body>
+</html>

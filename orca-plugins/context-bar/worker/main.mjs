@@ -1,0 +1,183 @@
+// Mesure la session suivie à chaque fin de tour, changement de session ou de workspace.
+// Session suivie : celle épinglée dans le panneau, sinon (« Auto ») la plus récente du
+// workspace ouvert dans Orca, sinon la plus récente tout court.
+import { watch } from 'node:fs'
+import { join, sep } from 'node:path'
+
+import { lastReadings, readHistory, record } from './history.mjs'
+import { inspect, latestTranscript, measure, projectSlug, projectsDir, recentSessions, transcriptOf } from './session.mjs'
+import { orcaCli, pickPath } from './workspace.mjs'
+
+const DEBOUNCE_MS = 1500
+
+let watcher = null
+
+/** @type {import('orca/worker').Activate} */
+export default async function activate(orca) {
+  let state = { status: 'idle', reading: null, history: null, error: null, sessionId: null, title: null, pinned: null, workspace: null }
+  let focusDir = null // dossier Claude du workspace qui a le focus
+  let measured = null // `${sessionId}:${turnId}` déjà mesuré
+  let running = false
+  let again = false
+  let timer = null
+
+  const publish = patch => {
+    state = { ...state, ...patch }
+    orca.panels.post('context.changed', state)
+  }
+
+  function target() {
+    if (state.pinned) return transcriptOf(state.pinned)
+    return (focusDir && latestTranscript(projectsDir(), focusDir)) || latestTranscript()
+  }
+
+  async function refresh(force = false) {
+    if (running) return void (again = true)
+    const file = target()
+    if (!file) return publish({ status: 'idle', error: 'Aucune session Claude Code trouvée.' })
+    const s = inspect(file)
+    const key = `${s.sessionId}:${s.turnId}`
+    if (!force && key === measured && s.sessionId === state.sessionId) {
+      if (s.title !== state.title) publish({ title: s.title })
+      return
+    }
+    running = true
+    // L'ancienne lecture reste affichée jusqu'à la nouvelle ; l'historique suit tout de suite la session.
+    publish({ status: 'loading', sessionId: s.sessionId, title: s.title, ...(s.sessionId !== state.sessionId && { history: readHistory(s.sessionId) }) })
+    try {
+      const reading = await measure(s, { onEmpty: orca.log })
+      // Session changée pendant la mesure (épinglage, focus) : résultat périmé, on remesure.
+      if (target() !== file) again = true
+      else {
+        measured = key // même vide : pas de relance à chaque écriture du transcript, on attend le tour suivant (ou ↻)
+        if (reading) publish({ status: 'ready', reading, history: record(s.sessionId, s.turnId, reading), error: null })
+        else publish({ status: 'busy', error: null }) // la lecture précédente reste affichée
+      }
+    } catch (e) {
+      orca.log(String(e))
+      publish({ status: 'error', error: e.message })
+    } finally {
+      running = false
+      if (again) {
+        again = false
+        void refresh()
+      }
+    }
+  }
+
+  // Le workspace qui a le focus → son chemin → le dossier où Claude range ses sessions.
+  // (workspace.list n'existe qu'à partir de l'API hôte 1.3 : on passe par le CLI d'Orca.)
+  const dirOf = path => join(projectsDir(), projectSlug(path))
+
+  // `workspace.changed` part aussi à chaque renommage de terminal : les événements rapprochés sont
+  // regroupés, seul le dernier contexte compte (une lecture de `orca worktree ps`, ~0,3 s).
+  let latest = null
+  let following = false
+  let followAgain = false
+  const sleep = ms => new Promise(r => setTimeout(r, ms))
+
+  async function follow() {
+    if (following) return void (followAgain = true)
+    following = true
+    try {
+      const context = latest
+      if (!context) return // vue chat ou rien au premier plan : on garde le dernier workspace suivi
+      let pick = { path: null, ambiguous: true }
+      // Homonymes : isActive peut être en retard sur l'interface, on relit quelques fois.
+      for (let i = 0; i < 4 && pick.ambiguous && context === latest; i++) {
+        if (i) await sleep(700)
+        const ps = await orcaCli('worktree', 'ps')
+        pick = await pickPath(context, ps, async () => (await orcaCli('terminal', 'list')).terminals)
+      }
+      if (context === latest && pick.ambiguous) orca.log(`workspace ambigu (${context.displayName} sur ${context.branch}) : isActive ne tranche pas, on garde le précédent`)
+      if (context !== latest || !pick.path) return // dépassé, inconnu ou indécidable : on garde l'ancien
+      if (dirOf(pick.path) === focusDir) return
+      focusDir = dirOf(pick.path) // remplacé seulement une fois le nouveau connu
+      orca.log(`workspace suivi : ${pick.path}`)
+      publish({ workspace: context.displayName })
+      if (!state.pinned) void refresh()
+    } catch (e) {
+      orca.log(`workspace introuvable : ${e.message}`)
+    } finally {
+      following = false
+      if (followAgain) {
+        followAgain = false
+        void follow()
+      }
+    }
+  }
+
+  const onWorkspace = context => {
+    latest = context
+    void follow()
+  }
+  orca.events.on('workspace.changed', ({ context }) => onWorkspace(context))
+  // Relais du panneau : Orca n'envoie pas cet événement à un worker arrêté pour inactivité.
+  orca.panels.handle('workspace.focus', async ({ context }) => {
+    onWorkspace(context)
+    return state
+  })
+
+  watcher = watch(projectsDir(), { recursive: true }, (_event, name) => {
+    if (!name || !name.endsWith('.jsonl') || name.split(sep).length !== 2) return
+    clearTimeout(timer)
+    timer = setTimeout(() => void refresh(), DEBOUNCE_MS)
+  })
+
+  orca.panels.handle('context.get', async () => {
+    if (state.status === 'idle' && !state.reading) void refresh()
+    return state
+  })
+  orca.panels.handle('context.refresh', async () => {
+    void refresh(true)
+    return state
+  })
+  orca.panels.handle('sessions.list', async () => recentSessions())
+
+  // Panneau Conversations : les sessions récentes avec leur dernière mesure enregistrée (aucun
+  // `claude` lancé), l'historique d'une session, et une mesure à la demande d'une session précise.
+  orca.panels.handle('conversations.list', async () => {
+    const sessions = recentSessions(projectsDir(), 40)
+    const last = lastReadings(sessions.map(s => s.sessionId))
+    return { tracked: state.sessionId, sessions: sessions.map(s => ({ ...s, last: last[s.sessionId] ?? null })) }
+  })
+  orca.panels.handle('conversation.history', async ({ sessionId }) => readHistory(sessionId))
+
+  // « Suivre » bascule sur le panneau Context Bar. Ni le worker ni le panneau ne peuvent ouvrir un
+  // panneau : on passe par `orca plugin open`, qui demande la clé du plugin (« local.context-bar »
+  // en dev, « <éditeur>.context-bar » installé), que l'API worker ne donne pas.
+  let pluginKey = null
+  orca.panels.handle('panel.open', async ({ panel }) => {
+    if (!pluginKey) {
+      const mine = (await orcaCli('plugin', 'list')).plugins.filter(p => /(^|\.)context-bar$/.test(p.pluginKey) && p.panels.some(x => x.id === 'conversations'))
+      pluginKey = (mine.find(p => p.isDev) ?? mine[0])?.pluginKey // dev et installé à la fois : le dev l'emporte
+      if (!pluginKey) throw new Error('Context Bar introuvable dans `orca plugin list`.')
+    }
+    return orcaCli('plugin', 'open', pluginKey, '--panel', panel)
+  })
+  const measuring = new Set()
+  orca.panels.handle('conversation.measure', async ({ sessionId }) => {
+    const file = transcriptOf(sessionId)
+    if (!file) throw new Error('Session introuvable.')
+    if (sessionId === state.sessionId) return void (await refresh(true)) // la session suivie : même chemin que ↻
+    if (measuring.has(sessionId)) return
+    measuring.add(sessionId)
+    try {
+      const s = inspect(file)
+      const reading = await measure(s, { onEmpty: orca.log })
+      if (!reading) throw new Error('/context n’a rien renvoyé pour cette session, réessaie dans un instant.')
+      record(s.sessionId, s.turnId, reading)
+    } finally {
+      measuring.delete(sessionId)
+    }
+  })
+  orca.panels.handle('session.pin', async ({ sessionId }) => {
+    publish({ pinned: sessionId ?? null })
+    void refresh()
+    return state
+  })
+}
+
+export function deactivate() {
+  watcher?.close()
+}
