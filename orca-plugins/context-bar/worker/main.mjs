@@ -5,7 +5,7 @@ import { watch } from 'node:fs'
 import { join, sep } from 'node:path'
 
 import { inspect, latestTranscript, measure, projectSlug, projectsDir, recentSessions, transcriptOf } from './session.mjs'
-import { activePath, orcaCli } from './workspace.mjs'
+import { orcaCli, pickPath } from './workspace.mjs'
 
 const DEBOUNCE_MS = 1500
 
@@ -67,23 +67,32 @@ export default async function activate(orca) {
   const dirOf = path => join(projectsDir(), projectSlug(path))
 
   // `workspace.changed` part aussi à chaque renommage de terminal : les événements rapprochés sont
-  // regroupés en une seule lecture de `orca worktree ps` (~0,3 s).
+  // regroupés, seul le dernier contexte compte (une lecture de `orca worktree ps`, ~0,3 s).
+  let latest = null
   let following = false
   let followAgain = false
+  const sleep = ms => new Promise(r => setTimeout(r, ms))
 
   async function follow() {
     if (following) return void (followAgain = true)
     following = true
     try {
-      const ps = await orcaCli('worktree', 'ps')
-      const path = activePath(ps)
-      // Aucun workspace ouvert (vue chat…) ou inchangé : on garde le dernier suivi.
-      if (path && dirOf(path) !== focusDir) {
-        focusDir = dirOf(path) // remplacé seulement une fois le nouveau connu
-        orca.log(`workspace suivi : ${path}`)
-        publish({ workspace: ps.worktrees.find(w => w.path === path).displayName })
-        if (!state.pinned) void refresh()
+      const context = latest
+      if (!context) return // vue chat ou rien au premier plan : on garde le dernier workspace suivi
+      let pick = { path: null, ambiguous: true }
+      // Homonymes : isActive peut être en retard sur l'interface, on relit quelques fois.
+      for (let i = 0; i < 4 && pick.ambiguous && context === latest; i++) {
+        if (i) await sleep(700)
+        const ps = await orcaCli('worktree', 'ps')
+        pick = pickPath(context, ps)
       }
+      if (context === latest && pick.ambiguous) orca.log(`workspace ambigu (${context.displayName} sur ${context.branch}) : isActive ne tranche pas, on garde le précédent`)
+      if (context !== latest || !pick.path) return // dépassé, inconnu ou indécidable : on garde l'ancien
+      if (dirOf(pick.path) === focusDir) return
+      focusDir = dirOf(pick.path) // remplacé seulement une fois le nouveau connu
+      orca.log(`workspace suivi : ${pick.path}`)
+      publish({ workspace: context.displayName })
+      if (!state.pinned) void refresh()
     } catch (e) {
       orca.log(`workspace introuvable : ${e.message}`)
     } finally {
@@ -95,7 +104,10 @@ export default async function activate(orca) {
     }
   }
 
-  orca.events.on('workspace.changed', () => void follow())
+  orca.events.on('workspace.changed', ({ context }) => {
+    latest = context
+    void follow()
+  })
 
   watcher = watch(projectsDir(), { recursive: true }, (_event, name) => {
     if (!name || !name.endsWith('.jsonl') || name.split(sep).length !== 2) return

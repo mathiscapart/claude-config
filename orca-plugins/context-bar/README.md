@@ -17,10 +17,12 @@ le plus proche.
     écrit qui gagne : Orca n'expose pas aux plugins l'onglet de chat qui a le focus.
   - **une session précise** parmi les 15 plus récentes (titre généré par Claude, projet) : elle
     reste épinglée jusqu'au retour en Auto.
-- Le workspace ouvert vient du CLI d'Orca (`orca worktree ps`, champ `isActive`) : l'événement
-  `workspace.changed` ne donne que nom et branche, ambigus quand plusieurs workspaces s'appellent
-  `main`, et `workspace.list` n'existe qu'à partir de l'API hôte 1.3. Un agent qui travaille dans
-  un autre workspace ne fait donc pas changer la session suivie.
+- Le workspace ouvert vient de l'événement `workspace.changed` (nom et branche), traduit en chemin
+  par le CLI d'Orca (`orca worktree ps`) : `workspace.list` n'existe qu'à partir de l'API hôte 1.3.
+  Quand plusieurs workspaces portent le même nom et la même branche (plusieurs `main`), le champ
+  `isActive` de `orca worktree ps` départage ; s'il ne tranche pas, le panneau garde le workspace
+  précédent plutôt que de choisir au hasard. L'activité d'un agent dans un autre workspace ne
+  change jamais la session suivie.
 - À chaque fin de tour (`stop_reason: end_turn`) ou changement de session, il lance :
 
   ```
