@@ -1,27 +1,13 @@
-// Du workspace qui a le focus (nom, branche, terminaux) à son chemin sur le disque.
-// Plusieurs workspaces peuvent porter le même nom et la même branche (« main ») :
-// un terminal du workspace tranche, sinon celui qui a la session Claude la plus récente.
+// Le workspace ouvert dans Orca et son chemin sur le disque.
+// `workspace.changed` ne donne que nom, branche et terminaux : plusieurs workspaces s'appellent
+// « main » sur « main ». `orca worktree ps` marque le seul ouvert dans l'interface (`isActive`).
 import { execFile } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 
-const stripRef = b => (b ?? '').replace(/^refs\/heads\//, '')
-
-/**
- * @param {{ displayName: string, branch: string, terminals: { id: string }[] }} context
- * @param {{ displayName: string, branch: string, path: string }[]} worktrees `orca worktree list`
- * @param {() => Promise<{ handle: string, ptyId: string|null, worktreePath: string }[]>} terminals `orca terminal list`, lu seulement si nécessaire
- * @param {(path: string) => number} lastActivity date de la dernière session Claude de ce chemin (0 si aucune)
- */
-export async function pickPath(context, worktrees, terminals, lastActivity) {
-  const found = worktrees.filter(w => w.displayName === context.displayName && stripRef(w.branch) === stripRef(context.branch))
-  if (found.length <= 1) return found[0]?.path ?? null
-  const ids = new Set(context.terminals.map(t => t.id))
-  const term = ids.size ? (await terminals()).find(t => ids.has(t.handle) || ids.has(t.ptyId)) : null
-  if (term && found.some(w => w.path === term.worktreePath)) return term.worktreePath
-  return found.reduce((a, b) => (lastActivity(b.path) > lastActivity(a.path) ? b : a)).path
-}
+/** @param {{ worktrees: { path: string, isActive: boolean }[] }} ps résultat de `orca worktree ps` */
+export const activePath = ps => ps.worktrees.find(w => w.isActive)?.path ?? null
 
 /** Le CLI d'Orca, livré à côté de l'exécutable qui fait tourner ce worker. */
 function cliPath() {

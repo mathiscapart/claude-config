@@ -1,11 +1,11 @@
 // Mesure la session suivie à chaque fin de tour, changement de session ou de workspace.
 // Session suivie : celle épinglée dans le panneau, sinon (« Auto ») la plus récente du
-// workspace qui a le focus dans Orca, sinon la plus récente tout court.
-import { statSync, watch } from 'node:fs'
+// workspace ouvert dans Orca, sinon la plus récente tout court.
+import { watch } from 'node:fs'
 import { join, sep } from 'node:path'
 
 import { inspect, latestTranscript, measure, projectSlug, projectsDir, recentSessions, transcriptOf } from './session.mjs'
-import { orcaCli, pickPath } from './workspace.mjs'
+import { activePath, orcaCli } from './workspace.mjs'
 
 const DEBOUNCE_MS = 1500
 
@@ -65,38 +65,37 @@ export default async function activate(orca) {
   // Le workspace qui a le focus → son chemin → le dossier où Claude range ses sessions.
   // (workspace.list n'existe qu'à partir de l'API hôte 1.3 : on passe par le CLI d'Orca.)
   const dirOf = path => join(projectsDir(), projectSlug(path))
-  const lastActivity = path => {
-    const file = latestTranscript(projectsDir(), dirOf(path))
-    return file ? statSync(file).mtimeMs : 0
-  }
 
-  // `workspace.changed` part aussi à chaque renommage de terminal (les agents le font sans cesse) :
-  // on ne résout que si le workspace change vraiment (nom, branche, ids des terminaux, pas leurs titres).
-  let followedKey = null
-  let followSeq = 0
+  // `workspace.changed` part aussi à chaque renommage de terminal : les événements rapprochés sont
+  // regroupés en une seule lecture de `orca worktree ps` (~0,3 s).
+  let following = false
+  let followAgain = false
 
-  async function follow(context) {
-    if (!context) return // vue chat ou rien au premier plan : on garde le dernier workspace suivi
-    const key = JSON.stringify([context.displayName, context.branch, context.terminals.map(t => t.id).sort()])
-    if (key === followedKey) return
-    followedKey = key
-    const seq = ++followSeq
+  async function follow() {
+    if (following) return void (followAgain = true)
+    following = true
     try {
-      const { worktrees } = await orcaCli('worktree', 'list')
-      const path = await pickPath(context, worktrees, async () => (await orcaCli('terminal', 'list')).terminals, lastActivity)
-      if (seq !== followSeq || !path) return // dépassé par un changement plus récent, ou inconnu : on garde l'ancien
-      if (dirOf(path) === focusDir) return
-      focusDir = dirOf(path) // remplacé seulement une fois le nouveau résolu
-      orca.log(`workspace suivi : ${path}`)
-      publish({ workspace: context.displayName })
-      if (!state.pinned) void refresh()
+      const ps = await orcaCli('worktree', 'ps')
+      const path = activePath(ps)
+      // Aucun workspace ouvert (vue chat…) ou inchangé : on garde le dernier suivi.
+      if (path && dirOf(path) !== focusDir) {
+        focusDir = dirOf(path) // remplacé seulement une fois le nouveau connu
+        orca.log(`workspace suivi : ${path}`)
+        publish({ workspace: ps.worktrees.find(w => w.path === path).displayName })
+        if (!state.pinned) void refresh()
+      }
     } catch (e) {
-      if (seq === followSeq) followedKey = null // réessayer au prochain événement
       orca.log(`workspace introuvable : ${e.message}`)
+    } finally {
+      following = false
+      if (followAgain) {
+        followAgain = false
+        void follow()
+      }
     }
   }
 
-  orca.events.on('workspace.changed', ({ context }) => void follow(context))
+  orca.events.on('workspace.changed', () => void follow())
 
   watcher = watch(projectsDir(), { recursive: true }, (_event, name) => {
     if (!name || !name.endsWith('.jsonl') || name.split(sep).length !== 2) return
