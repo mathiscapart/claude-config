@@ -44,10 +44,11 @@ async function detail(s, body) {
   const actions = el('div', { className: 'actions' })
   const measureBtn = el('button', { type: 'button', disabled: busy.has(s.sessionId) }, busy.has(s.sessionId) ? 'Mesure…' : 'Mesurer')
   measureBtn.onclick = () => void measureOne(s.sessionId)
-  const follow = el('button', { type: 'button', title: 'Épingler dans le panneau Context Bar' }, 'Suivre')
+  const follow = el('button', { type: 'button', title: 'Épingler dans le panneau Context Bar et y aller' }, 'Suivre')
   follow.onclick = async () => {
     await request('session.pin', { sessionId: s.sessionId })
     $('status').textContent = `Context Bar suit « ${s.title ?? s.sessionId.slice(0, 8)} ».`
+    await request('panel.open', { panel: 'context' }).catch(e => ($('status').textContent += ` (${e.message})`))
   }
   actions.append(measureBtn, follow)
   if (!s.last) return body.replaceChildren(el('p', { className: 'muted' }, 'Jamais mesurée.'), actions)

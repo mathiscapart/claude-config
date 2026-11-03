@@ -142,6 +142,19 @@ export default async function activate(orca) {
     return { tracked: state.sessionId, sessions: sessions.map(s => ({ ...s, last: last[s.sessionId] ?? null })) }
   })
   orca.panels.handle('conversation.history', async ({ sessionId }) => readHistory(sessionId))
+
+  // « Suivre » bascule sur le panneau Context Bar. Ni le worker ni le panneau ne peuvent ouvrir un
+  // panneau : on passe par `orca plugin open`, qui demande la clé du plugin (« local.context-bar »
+  // en dev, « <éditeur>.context-bar » installé), que l'API worker ne donne pas.
+  let pluginKey = null
+  orca.panels.handle('panel.open', async ({ panel }) => {
+    if (!pluginKey) {
+      const mine = (await orcaCli('plugin', 'list')).plugins.filter(p => /(^|\.)context-bar$/.test(p.pluginKey) && p.panels.some(x => x.id === 'conversations'))
+      pluginKey = (mine.find(p => p.isDev) ?? mine[0])?.pluginKey // dev et installé à la fois : le dev l'emporte
+      if (!pluginKey) throw new Error('Context Bar introuvable dans `orca plugin list`.')
+    }
+    return orcaCli('plugin', 'open', pluginKey, '--panel', panel)
+  })
   const measuring = new Set()
   orca.panels.handle('conversation.measure', async ({ sessionId }) => {
     const file = transcriptOf(sessionId)

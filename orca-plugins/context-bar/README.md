@@ -54,7 +54,9 @@ catégorie, la courbe de l'historique et deux boutons :
 
 - **Mesurer** lance `/context` sur cette session (~3 s, même garde-fou `num_turns: 0`) et l'ajoute
   à son historique, sans changer la session suivie ;
-- **Suivre** épingle la session dans le panneau Context Bar.
+- **Suivre** épingle la session dans le panneau Context Bar et bascule dessus (via
+  `orca plugin open`, l'API plugin ne sait pas ouvrir un panneau). Retour au suivi du workspace
+  actif : « Auto » dans le sélecteur.
 
 La session suivie par Context Bar est marquée ●. La liste se recharge à chaque mesure de la
 session suivie, au retour sur le panneau, ou avec ↻.
