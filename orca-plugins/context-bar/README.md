@@ -19,9 +19,11 @@ le plus proche.
     reste épinglée jusqu'au retour en Auto.
 - Le workspace ouvert vient de l'événement `workspace.changed` (nom et branche), traduit en chemin
   par le CLI d'Orca (`orca worktree ps`) : `workspace.list` n'existe qu'à partir de l'API hôte 1.3.
-  Quand plusieurs workspaces portent le même nom et la même branche (plusieurs `main`), le champ
-  `isActive` de `orca worktree ps` départage ; s'il ne tranche pas, le panneau garde le workspace
-  précédent plutôt que de choisir au hasard. L'activité d'un agent dans un autre workspace ne
+  Quand plusieurs workspaces portent le même nom et la même branche, un terminal du workspace
+  départage (ses ids sont ceux d'`orca terminal list`), sinon le champ `isActive` de
+  `orca worktree ps` ; si rien ne tranche, le panneau garde le workspace précédent plutôt que de
+  choisir au hasard. Le plus sûr reste de donner un nom distinct à chaque workspace
+  (`orca worktree set --worktree path:<chemin> --display-name <nom>`, ne touche pas à la branche). L'activité d'un agent dans un autre workspace ne
   change jamais la session suivie.
 - À chaque fin de tour (`stop_reason: end_turn`) ou changement de session, il lance :
 

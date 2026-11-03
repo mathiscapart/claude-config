@@ -12,25 +12,31 @@ const ps = {
     w('BitWarden', '', 'C:/BitWarden'),
   ],
 }
-const ctx = (displayName, branch) => ({ displayName, branch, terminals: [] })
+const ctx = (displayName, branch, terminals = []) => ({ displayName, branch, terminals })
+const noTerminals = async () => assert.fail('terminal list ne devrait pas être lu')
 
-test("nom et branche uniques : l'événement suffit, même si isActive est en retard", () => {
-  assert.deepEqual(pickPath(ctx('develop', 'develop-2'), ps), { path: 'C:/piloti/develop-2', ambiguous: false })
+test("nom et branche uniques : l'événement suffit, même si isActive est en retard", async () => {
+  assert.deepEqual(await pickPath(ctx('develop', 'develop-2'), ps, noTerminals), { path: 'C:/piloti/develop-2', ambiguous: false })
 })
 
-test('dossier sans branche', () => {
-  assert.equal(pickPath(ctx('BitWarden', ''), ps).path, 'C:/BitWarden')
+test('dossier sans branche', async () => {
+  assert.equal((await pickPath(ctx('BitWarden', ''), ps, noTerminals)).path, 'C:/BitWarden')
 })
 
-test('homonymes : isActive tranche', () => {
-  assert.deepEqual(pickPath(ctx('main', 'refs/heads/main'), ps), { path: 'C:/claude-config', ambiguous: false })
+test('homonymes : un terminal du workspace tranche, avant isActive', async () => {
+  const terminals = async () => [{ handle: 'term_1', worktreePath: 'C:/piloti' }]
+  assert.deepEqual(await pickPath(ctx('main', 'main', [{ id: 'term_1' }]), ps, terminals), { path: 'C:/piloti', ambiguous: false })
 })
 
-test('homonymes sans isActive parmi eux : ambigu, pas de choix au hasard', () => {
+test('homonymes sans terminal : isActive tranche', async () => {
+  assert.deepEqual(await pickPath(ctx('main', 'refs/heads/main'), ps, noTerminals), { path: 'C:/claude-config', ambiguous: false })
+})
+
+test('homonymes sans isActive parmi eux : ambigu, pas de choix au hasard', async () => {
   const lagging = { worktrees: ps.worktrees.map(x => ({ ...x, isActive: x.displayName === 'develop' })) }
-  assert.deepEqual(pickPath(ctx('main', 'main'), lagging), { path: null, ambiguous: true })
+  assert.deepEqual(await pickPath(ctx('main', 'main'), lagging, noTerminals), { path: null, ambiguous: true })
 })
 
-test('workspace inconnu : null', () => {
-  assert.deepEqual(pickPath(ctx('autre', 'main'), ps), { path: null, ambiguous: false })
+test('workspace inconnu : null', async () => {
+  assert.deepEqual(await pickPath(ctx('autre', 'main'), ps, noTerminals), { path: null, ambiguous: false })
 })

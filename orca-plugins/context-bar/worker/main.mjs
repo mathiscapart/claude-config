@@ -84,7 +84,7 @@ export default async function activate(orca) {
       for (let i = 0; i < 4 && pick.ambiguous && context === latest; i++) {
         if (i) await sleep(700)
         const ps = await orcaCli('worktree', 'ps')
-        pick = pickPath(context, ps)
+        pick = await pickPath(context, ps, async () => (await orcaCli('terminal', 'list')).terminals)
       }
       if (context === latest && pick.ambiguous) orca.log(`workspace ambigu (${context.displayName} sur ${context.branch}) : isActive ne tranche pas, on garde le précédent`)
       if (context !== latest || !pick.path) return // dépassé, inconnu ou indécidable : on garde l'ancien

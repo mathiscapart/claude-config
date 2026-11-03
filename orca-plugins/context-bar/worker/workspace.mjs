@@ -1,6 +1,7 @@
 // Du workspace annoncé par `workspace.changed` (nom, branche) à son chemin sur le disque.
-// Plusieurs workspaces peuvent s'appeler « main » sur « main » : `isActive` de `orca worktree ps`
-// (le workspace actif enregistré par Orca, parfois en retard sur l'interface) départage alors.
+// Plusieurs workspaces peuvent porter le même nom et la même branche. Pour départager : un de ses
+// terminaux (les ids de l'événement sont les handles d'`orca terminal list`), sinon `isActive` de
+// `orca worktree ps` (le workspace actif enregistré par Orca, parfois en retard sur l'interface).
 import { execFile } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { homedir } from 'node:os'
@@ -9,13 +10,17 @@ import { dirname, join } from 'node:path'
 const stripRef = b => (b ?? '').replace(/^refs\/heads\//, '')
 
 /**
- * @param {{ displayName: string, branch: string }} context
+ * @param {{ displayName: string, branch: string, terminals: { id: string }[] }} context
  * @param {{ worktrees: { displayName: string, branch: string, path: string, isActive: boolean }[] }} ps `orca worktree ps`
- * @returns {{ path: string|null, ambiguous: boolean }} ambiguous : homonymes qu'isActive ne départage pas (encore)
+ * @param {() => Promise<{ handle: string, worktreePath: string }[]>} terminals `orca terminal list`, lu seulement pour des homonymes
+ * @returns {Promise<{ path: string|null, ambiguous: boolean }>} ambiguous : homonymes que rien ne départage (encore)
  */
-export function pickPath(context, ps) {
+export async function pickPath(context, ps, terminals) {
   const found = ps.worktrees.filter(w => w.displayName === context.displayName && stripRef(w.branch) === stripRef(context.branch))
   if (found.length <= 1) return { path: found[0]?.path ?? null, ambiguous: false }
+  const ids = new Set(context.terminals.map(t => t.id))
+  const term = ids.size ? (await terminals()).find(t => ids.has(t.handle) && found.some(w => w.path === t.worktreePath)) : null
+  if (term) return { path: term.worktreePath, ambiguous: false }
   const active = found.find(w => w.isActive)
   return { path: active?.path ?? null, ambiguous: !active }
 }
