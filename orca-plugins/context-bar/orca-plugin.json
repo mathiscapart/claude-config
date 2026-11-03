@@ -3,7 +3,7 @@
   "execution": "trusted-worker",
   "id": "context-bar",
   "name": "Context Bar",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Ce qui remplit la fenêtre de contexte de la session Claude Code suivie (workspace actif ou session choisie), par catégorie et en détail comme /context, avec l'historique de chaque session et la liste des conversations.",
   "license": "MIT",
   "engines": {
