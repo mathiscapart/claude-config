@@ -54,3 +54,13 @@ select {
 #refresh .dots i:nth-child(3) { animation-delay: 0.3s; }
 @keyframes wave { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-3px); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { #refresh .dots i { animation: none; opacity: 0.8; } }
+/* Détail d'une catégorie : dépliable */
+li > details { flex: 1; }
+summary.row { display: flex; gap: 6px; align-items: baseline; cursor: pointer; list-style: none; }
+summary.row::-webkit-details-marker { display: none; }
+summary.row .name::after { content: ' ▸'; color: var(--orca-muted-foreground); }
+details[open] > summary.row .name::after { content: ' ▾'; }
+ul.items { margin: 2px 0 4px 15px; font-size: 11px; }
+ul.items .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+ul.items .tok { font-weight: 400; }
+.note { font-size: 10px; }

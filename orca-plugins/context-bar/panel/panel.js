@@ -80,9 +80,53 @@ function render(state) {
     const sw = el('span', { className: 'swatch' })
     sw.style.background = c.kind === 'free' || c.kind === 'deferred' ? 'transparent' : c.color
     if (c.kind === 'free' || c.kind === 'deferred') sw.style.border = `1px solid ${GREY}`
-    li.append(sw, el('span', { className: 'name' }, c.name), el('span', { className: 'tok' }, tokens(c.tokens)), el('span', { className: 'share muted' }, share(c.tokens, r.window)))
+    const row = [sw, el('span', { className: 'name' }, c.name), el('span', { className: 'tok' }, tokens(c.tokens)), el('span', { className: 'share muted' }, share(c.tokens, r.window))]
+    if (c.items?.length) li.append(foldable(c.name, row, detailOf(c)))
+    else li.append(...row)
     return li
   }))
+}
+
+// Détail d'une catégorie (tableaux par élément de /context). Les sections ouvertes le restent
+// d'une mesure à l'autre.
+const open = new Set()
+
+function foldable(key, summaryChildren, body) {
+  const d = el('details', { open: open.has(key) })
+  d.ontoggle = () => (d.open ? open.add(key) : open.delete(key))
+  const s = el('summary', { className: 'row' })
+  s.append(...summaryChildren)
+  d.append(s, body)
+  return d
+}
+
+const byTokens = (a, b) => b.tokens - a.tokens
+
+function itemRow({ name, source, tokens: n }, label = name) {
+  const li = el('li', { className: 'row item', title: source ? `${name} (${source})` : name })
+  li.append(el('span', { className: 'name' }, label), el('span', { className: 'tok' }, tokens(n)))
+  return li
+}
+
+function detailOf(c) {
+  const ul = el('ul', { className: 'items' })
+  if (c.name !== 'MCP tools') {
+    ul.append(...[...c.items].sort(byTokens).map(i => itemRow(i, c.name === 'Memory files' ? `${i.name.split(/[\\/]/).pop()} · ${i.source}` : i.name)))
+    return ul
+  }
+  // Outils MCP : un groupe par serveur. /context les liste tous, différés compris.
+  const servers = [...Map.groupBy(c.items, i => i.source ?? '?')]
+    .map(([server, tools]) => ({ server, tools, sum: tools.reduce((s, t) => s + t.tokens, 0) }))
+    .sort((a, b) => b.sum - a.sum)
+  ul.append(el('li', { className: 'muted note' }, 'Liste complète, outils différés compris'))
+  for (const { server, tools, sum } of servers) {
+    const sub = el('ul', { className: 'items' })
+    sub.append(...tools.sort(byTokens).map(t => itemRow(t, t.name.replace(`mcp__${server}__`, ''))))
+    const li = el('li')
+    li.append(foldable(`mcp:${server}`, [el('span', { className: 'name' }, `${server} (${tools.length})`), el('span', { className: 'tok' }, tokens(sum))], sub))
+    ul.append(li)
+  }
+  return ul
 }
 
 window.orca.plugin.on('context.changed', render)

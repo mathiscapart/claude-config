@@ -35,6 +35,9 @@ le plus proche.
   lecture), aucun fichier de session créé, le transcript d'origine n'est pas modifié. Compter ~3 s
   par mesure, le temps que `claude` démarre ses serveurs MCP.
 - Le bouton ↻ force une nouvelle mesure.
+- Les catégories que `/context` détaille se déplient : outils MCP (par serveur, puis par outil),
+  agents, fichiers mémoire, skills, chacun avec ses tokens. Le tableau des outils MCP de `/context`
+  liste aussi les outils différés : sa somme dépasse donc la ligne « MCP tools ».
 - Orca arrête un worker inactif depuis quelques minutes et ne le relance pas pour `workspace.changed` :
   tant qu'il est ouvert, le panneau relaie cet événement au worker et le sollicite chaque minute.
   Panneau fermé, le suivi s'arrête ; il reprend sur le workspace courant à la réouverture.
@@ -60,5 +63,5 @@ Le plugin est `trusted-worker` : son worker tourne en Node avec les droits de to
 node --test orca-plugins/context-bar/test/*.test.mjs
 ```
 
-`test/context-output.md` est une vraie sortie de `/context` (Claude Code 2.1.317), tronquée au
-tableau des catégories.
+`test/context-output.md` est une vraie sortie de `/context` (Claude Code 2.1.317), avec la liste
+des outils MCP réduite à deux serveurs.
