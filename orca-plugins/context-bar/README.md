@@ -38,6 +38,12 @@ le plus proche.
 - Les catégories que `/context` détaille se déplient : outils MCP (par serveur, puis par outil),
   agents, fichiers mémoire, skills, chacun avec ses tokens. Le tableau des outils MCP de `/context`
   liste aussi les outils différés : sa somme dépasse donc la ligne « MCP tools ».
+- Chaque mesure est ajoutée à l'historique de sa session, `~/.claude/context-bar/history/<session>.jsonl`
+  (ou sous `$CLAUDE_CONFIG_DIR`) : date, tour, total, tokens par catégorie, sans le détail par
+  élément. Remesurer le même tour au même total n'ajoute rien. Sous la barre, une courbe montre
+  le total mesure après mesure, l'écart avec la précédente et le nombre de compactions (chute de
+  plus de 30 %). L'historique commence à la première mesure : rien n'est reconstitué pour les tours
+  passés.
 - Orca arrête un worker inactif depuis quelques minutes et ne le relance pas pour `workspace.changed` :
   tant qu'il est ouvert, le panneau relaie cet événement au worker et le sollicite chaque minute.
   Panneau fermé, le suivi s'arrête ; il reprend sur le workspace courant à la réouverture.

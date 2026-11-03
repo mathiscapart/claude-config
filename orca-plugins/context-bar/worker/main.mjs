@@ -4,6 +4,7 @@
 import { watch } from 'node:fs'
 import { join, sep } from 'node:path'
 
+import { readHistory, record } from './history.mjs'
 import { inspect, latestTranscript, measure, projectSlug, projectsDir, recentSessions, transcriptOf } from './session.mjs'
 import { orcaCli, pickPath } from './workspace.mjs'
 
@@ -13,7 +14,7 @@ let watcher = null
 
 /** @type {import('orca/worker').Activate} */
 export default async function activate(orca) {
-  let state = { status: 'idle', reading: null, error: null, sessionId: null, title: null, pinned: null, workspace: null }
+  let state = { status: 'idle', reading: null, history: null, error: null, sessionId: null, title: null, pinned: null, workspace: null }
   let focusDir = null // dossier Claude du workspace qui a le focus
   let measured = null // `${sessionId}:${turnId}` déjà mesuré
   let running = false
@@ -41,14 +42,15 @@ export default async function activate(orca) {
       return
     }
     running = true
-    publish({ status: 'loading', sessionId: s.sessionId, title: s.title }) // l'ancienne lecture reste affichée jusqu'à la nouvelle
+    // L'ancienne lecture reste affichée jusqu'à la nouvelle ; l'historique suit tout de suite la session.
+    publish({ status: 'loading', sessionId: s.sessionId, title: s.title, ...(s.sessionId !== state.sessionId && { history: readHistory(s.sessionId) }) })
     try {
       const reading = await measure(s)
       // Session changée pendant la mesure (épinglage, focus) : résultat périmé, on remesure.
       if (target() !== file) again = true
       else {
         measured = key
-        publish({ status: 'ready', reading, error: null })
+        publish({ status: 'ready', reading, history: record(s.sessionId, s.turnId, reading), error: null })
       }
     } catch (e) {
       orca.log(String(e))
