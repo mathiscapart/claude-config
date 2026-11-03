@@ -1,0 +1,25 @@
+{
+  "manifestVersion": 2,
+  "execution": "trusted-worker",
+  "id": "context-bar",
+  "name": "Context Bar",
+  "version": "0.1.0",
+  "description": "Ce qui remplit la fenêtre de contexte de la session Claude Code active, par catégorie, comme /context.",
+  "license": "MIT",
+  "engines": {
+    "orca": ">=1.4.246"
+  },
+  "pluginApi": 1,
+  "main": "worker/main.mjs",
+  "contributes": {
+    "panels": [
+      {
+        "id": "context",
+        "title": "Context Bar",
+        "icon": "gauge",
+        "entry": "panel/index.html"
+      }
+    ]
+  },
+  "capabilities": []
+}
